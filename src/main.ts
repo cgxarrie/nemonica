@@ -32,6 +32,7 @@ const fromDec = must<HTMLButtonElement>("#from-dec");
 const fromInc = must<HTMLButtonElement>("#from-inc");
 const toDec = must<HTMLButtonElement>("#to-dec");
 const toInc = must<HTMLButtonElement>("#to-inc");
+const rangeSummary = must<HTMLElement>("#range-summary");
 const presets = must<HTMLElement>("#presets");
 const tabPractice = must<HTMLButtonElement>("#tab-practice");
 const tabStack = must<HTMLButtonElement>("#tab-stack");
@@ -246,6 +247,7 @@ function updateRange(range: Range): void {
 function syncRangeInputs(force = false): void {
   if (force || document.activeElement !== fromInput) fromInput.value = String(state.from);
   if (force || document.activeElement !== toInput) toInput.value = String(state.to);
+  rangeSummary.textContent = `${state.from}–${state.to}`;
   fromDec.disabled = state.from <= 1;
   fromInc.disabled = state.from >= state.to - 1;
   toDec.disabled = state.to <= state.from + 1;

@@ -26,52 +26,58 @@
         </div>
       </header>
 
-      <section class="range" aria-label="Rango de posiciones">
-        <div class="range-fields">
-          <label class="stepper">
-            <span>Desde</span>
-            <span class="stepper-row">
-              <button type="button" id="from-dec" aria-label="Bajar la posición inicial">−</button>
-              <input
-                id="from-input"
-                inputmode="numeric"
-                autocomplete="off"
-                spellcheck="false"
-                maxlength="2"
-                value="1"
-                aria-label="Primera posición"
-              />
-              <button type="button" id="from-inc" aria-label="Subir la posición inicial">+</button>
-            </span>
-          </label>
-          <label class="stepper">
-            <span>Hasta</span>
-            <span class="stepper-row">
-              <button type="button" id="to-dec" aria-label="Bajar la posición final">−</button>
-              <input
-                id="to-input"
-                inputmode="numeric"
-                autocomplete="off"
-                spellcheck="false"
-                maxlength="2"
-                value="52"
-                aria-label="Última posición"
-              />
-              <button type="button" id="to-inc" aria-label="Subir la posición final">+</button>
-            </span>
-          </label>
+      <details class="range" open>
+        <summary>
+          <span>Rango de posiciones</span>
+          <span class="range-summary" id="range-summary">1–52</span>
+        </summary>
+        <div class="range-content">
+          <div class="range-fields">
+            <label class="stepper">
+              <span>Desde</span>
+              <span class="stepper-row">
+                <button type="button" id="from-dec" aria-label="Bajar la posición inicial">−</button>
+                <input
+                  id="from-input"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  spellcheck="false"
+                  maxlength="2"
+                  value="1"
+                  aria-label="Primera posición"
+                />
+                <button type="button" id="from-inc" aria-label="Subir la posición inicial">+</button>
+              </span>
+            </label>
+            <label class="stepper">
+              <span>Hasta</span>
+              <span class="stepper-row">
+                <button type="button" id="to-dec" aria-label="Bajar la posición final">−</button>
+                <input
+                  id="to-input"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  spellcheck="false"
+                  maxlength="2"
+                  value="52"
+                  aria-label="Última posición"
+                />
+                <button type="button" id="to-inc" aria-label="Subir la posición final">+</button>
+              </span>
+            </label>
+          </div>
+          <div class="presets" id="presets" role="group" aria-label="Rangos rápidos">
+            <button type="button" data-from="1" data-to="13">1–13</button>
+            <button type="button" data-from="14" data-to="26">14–26</button>
+            <button type="button" data-from="27" data-to="39">27–39</button>
+            <button type="button" data-from="40" data-to="52">40–52</button>
+            <button type="button" data-from="1" data-to="26">1–26</button>
+            <button type="button" data-from="27" data-to="52">27–52</button>
+            <button type="button" data-from="1" data-to="52">Todas</button>
+          </div>
+          <p class="hint">Las preguntas se quedan en este rango y no repiten posición ni carta dos veces seguidas.</p>
         </div>
-        <div class="presets" id="presets" role="group" aria-label="Rangos rápidos">
-          <button type="button" data-from="1" data-to="13">1–13</button>
-          <button type="button" data-from="14" data-to="26">14–26</button>
-          <button type="button" data-from="27" data-to="39">27–39</button>
-          <button type="button" data-from="40" data-to="52">40–52</button>
-          <button type="button" data-from="1" data-to="26">1–26</button>
-          <button type="button" data-from="27" data-to="52">27–52</button>
-          <button type="button" data-from="1" data-to="52">Todas</button>
-        </div>
-        <p class="hint">Las preguntas se quedan en este rango y no repiten posición ni carta dos veces seguidas.</p>
-      </section>
+      </details>
 
       <div class="views" role="tablist" aria-label="Vistas">
         <button type="button" role="tab" id="tab-practice" aria-selected="true" aria-controls="practice">
