@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0e2c22" />
+    <meta
+      name="description"
+      content="Practica la baraja Mnemonica. Di la posición de una carta, o la carta de una posición, dentro del rango que elijas."
+    />
+    <title>Nemonica</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <div>
+          <p class="eyebrow">Baraja Tamariz</p>
+          <h1>Nemonica</h1>
+        </div>
+        <div class="score">
+          <p class="score-value" id="score-value">0/0</p>
+          <p class="score-meta" id="score-meta">Listo</p>
+          <button type="button" id="reset-score" class="text-btn" hidden>Reiniciar</button>
+        </div>
+      </header>
+
+      <section class="range" aria-label="Rango de posiciones">
+        <div class="range-fields">
+          <label class="stepper">
+            <span>Desde</span>
+            <span class="stepper-row">
+              <button type="button" id="from-dec" aria-label="Bajar la posición inicial">−</button>
+              <input
+                id="from-input"
+                inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
+                maxlength="2"
+                value="1"
+                aria-label="Primera posición"
+              />
+              <button type="button" id="from-inc" aria-label="Subir la posición inicial">+</button>
+            </span>
+          </label>
+          <label class="stepper">
+            <span>Hasta</span>
+            <span class="stepper-row">
+              <button type="button" id="to-dec" aria-label="Bajar la posición final">−</button>
+              <input
+                id="to-input"
+                inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
+                maxlength="2"
+                value="52"
+                aria-label="Última posición"
+              />
+              <button type="button" id="to-inc" aria-label="Subir la posición final">+</button>
+            </span>
+          </label>
+        </div>
+        <div class="presets" id="presets" role="group" aria-label="Rangos rápidos">
+          <button type="button" data-from="1" data-to="13">1–13</button>
+          <button type="button" data-from="14" data-to="26">14–26</button>
+          <button type="button" data-from="27" data-to="39">27–39</button>
+          <button type="button" data-from="40" data-to="52">40–52</button>
+          <button type="button" data-from="1" data-to="26">1–26</button>
+          <button type="button" data-from="27" data-to="52">27–52</button>
+          <button type="button" data-from="1" data-to="52">Todas</button>
+        </div>
+        <p class="hint">Las preguntas se quedan en este rango y no repiten posición ni carta dos veces seguidas.</p>
+      </section>
+
+      <div class="views" role="tablist" aria-label="Vistas">
+        <button type="button" role="tab" id="tab-practice" aria-selected="true" aria-controls="practice">
+          Practicar
+        </button>
+        <button type="button" role="tab" id="tab-stack" aria-selected="false" aria-controls="stack-view">
+          Mazo
+        </button>
+      </div>
+
+      <section id="practice" role="tabpanel" aria-labelledby="tab-practice">
+        <div class="stage">
+          <div id="prompt"></div>
+          <p class="ask" id="ask"></p>
+        </div>
+        <div class="answer-block">
+          <div id="position-entry" class="entry">
+            <p id="position-preview" class="typed" aria-live="polite">—</p>
+            <div class="keypad" id="keypad">
+              <button type="button" data-digit="1">1</button>
+              <button type="button" data-digit="2">2</button>
+              <button type="button" data-digit="3">3</button>
+              <button type="button" data-digit="4">4</button>
+              <button type="button" data-digit="5">5</button>
+              <button type="button" data-digit="6">6</button>
+              <button type="button" data-digit="7">7</button>
+              <button type="button" data-digit="8">8</button>
+              <button type="button" data-digit="9">9</button>
+              <button type="button" data-action="back" aria-label="Borrar">⌫</button>
+              <button type="button" data-digit="0">0</button>
+              <button type="button" data-action="ok" class="ok" id="position-ok">OK</button>
+            </div>
+          </div>
+          <div id="card-entry" class="entry" hidden>
+            <p id="card-preview" class="typed placeholder">Valor y palo</p>
+            <div id="ranks" class="ranks" role="group" aria-label="Valor"></div>
+            <div id="suits" class="suits" role="group" aria-label="Palo"></div>
+            <button type="button" id="check-card" class="check" disabled>Comprobar</button>
+          </div>
+          <div id="feedback-block" hidden>
+            <p id="feedback" class="feedback" role="status"></p>
+            <button type="button" id="next" class="next">Siguiente</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="stack-view" role="tabpanel" aria-labelledby="tab-stack" hidden>
+        <p class="hint" id="stack-note"></p>
+        <ol class="stack-grid" id="stack-grid"></ol>
+      </section>
+    </div>
+    <noscript>Nemonica necesita JavaScript para funcionar.</noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
