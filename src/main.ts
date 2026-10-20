@@ -140,7 +140,7 @@ function buildRankButtons(): void {
 }
 
 function buildSuitButtons(): void {
-  for (const suit of SUITS) {
+  for (const suit of ["c", "h", "s", "d"] as const) {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = SUIT_SYMBOL[suit];
