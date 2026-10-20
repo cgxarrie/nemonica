@@ -10,7 +10,7 @@ import {
 } from "./quiz.ts";
 import { STACK, cardCode } from "./stack.ts";
 
-test("stack is the Mnemonica order", () => {
+test("stack is the Mnemónica order", () => {
   assert.equal(STACK.length, 52);
   assert.equal(cardCode(STACK[0]), "4c");
   assert.equal(cardCode(STACK[5]), "6d");

@@ -1,4 +1,4 @@
-/** Juan Tamariz's Mnemonica order, positions 1 through 52. */
+/** Juan Tamariz's Mnemónica order, positions 1 through 52. */
 export const RANKS = [
   "A",
   "2",
