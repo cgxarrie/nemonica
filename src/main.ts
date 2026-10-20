@@ -1,7 +1,6 @@
 import {
   RANKS,
   STACK,
-  SUITS,
   SUIT_NAME,
   SUIT_SYMBOL,
   cardLabel,
