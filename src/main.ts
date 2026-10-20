@@ -323,6 +323,7 @@ function submitCard(): void {
 }
 
 function settle(right: boolean, positionAnswer: number | null, cardAnswer: Card | null): void {
+  clearTimer();
   state.phase = "feedback";
   state.attempts += 1;
   if (right) {
@@ -548,7 +549,11 @@ function renderFeedback(result: Result): void {
   feedback.append(title);
 
   const detail = document.createElement("span");
-  if (question.askFor === "position") {
+  if (!result.right && question.askFor === "position") {
+    detail.textContent = `Respuesta correcta: posición ${question.position}.`;
+  } else if (!result.right) {
+    detail.append("Respuesta correcta: ", cardSpan(question.card), ".");
+  } else if (question.askFor === "position") {
     detail.append(cardSpan(question.card), ` es la posición ${question.position}.`);
   } else {
     detail.append(`La posición ${question.position} es `, cardSpan(question.card), ".");
@@ -564,6 +569,11 @@ function renderFeedback(result: Result): void {
       yours.append("Has dicho ", cardSpan(result.cardAnswer), ".");
     }
     feedback.append(yours);
+
+    const continueHint = document.createElement("span");
+    continueHint.className = "you-said";
+    continueHint.textContent = "Pulsa Siguiente para continuar.";
+    feedback.append(continueHint);
   }
 }
 
