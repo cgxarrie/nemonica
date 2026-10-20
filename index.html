@@ -79,14 +79,46 @@
         </div>
       </details>
 
-      <div class="views" role="tablist" aria-label="Vistas">
+      <div class="views" role="tablist" aria-label="Modo de juego y vistas">
         <button type="button" role="tab" id="tab-practice" aria-selected="true" aria-controls="practice">
           Practicar
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-race"
+          aria-selected="false"
+          aria-controls="race-panel practice"
+        >
+          Carrera
         </button>
         <button type="button" role="tab" id="tab-stack" aria-selected="false" aria-controls="stack-view">
           Mazo
         </button>
       </div>
+
+      <section id="race-panel" role="tabpanel" aria-labelledby="tab-race" hidden>
+        <div id="race-setup" class="race-panel">
+          <p class="race-title">Carrera</p>
+          <p class="hint">
+            Responde una vez por cada carta y una vez por cada posición del rango, en orden aleatorio.
+            No verás si has acertado hasta el final.
+          </p>
+          <button type="button" id="start-race" class="check">Empezar carrera</button>
+        </div>
+        <div id="race-status" class="race-status" hidden>
+          <p class="race-timer" id="race-timer" aria-live="off">00:00</p>
+          <p class="race-progress" id="race-progress"></p>
+        </div>
+        <div id="race-results" class="race-panel" hidden>
+          <p class="race-title">Carrera terminada</p>
+          <p class="race-summary" id="race-summary"></p>
+          <h2 class="mistakes-title" id="mistakes-title">Errores</h2>
+          <ol class="mistakes-list" id="mistakes-list"></ol>
+          <p class="hint" id="no-mistakes" hidden>¡Sin errores!</p>
+          <button type="button" id="restart-race" class="check">Nueva carrera</button>
+        </div>
+      </section>
 
       <section id="practice" role="tabpanel" aria-labelledby="tab-practice">
         <div class="stage">

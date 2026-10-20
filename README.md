@@ -8,7 +8,7 @@ The interface is in Spanish.
 
 Set **Desde** and **Hasta**, or pick a shortcut such as `1–13` or `Todas`. Questions stay inside that range. A position, and therefore its card, is never asked twice in a row. The range is at least two positions wide and is remembered in the browser.
 
-**Practicar** is the quiz. **Mazo** shows the full order, with the selected range highlighted.
+**Practicar** keeps asking questions for ongoing practice, showing feedback after each answer. **Carrera** asks for every card and every position in the selected range exactly once, in random order, without per-answer feedback. At the end, it shows the elapsed time, score, and any mistakes with their correct answers. **Mazo** shows the full order, with the selected range highlighted.
 
 ## Run locally
 

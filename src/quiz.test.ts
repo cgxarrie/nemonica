@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clampPosition, isRightCard, isRightPosition, normalizeRange, pickQuestion } from "./quiz.ts";
+import {
+  buildRaceQuestions,
+  clampPosition,
+  isRightCard,
+  isRightPosition,
+  normalizeRange,
+  pickQuestion,
+} from "./quiz.ts";
 import { STACK, cardCode } from "./stack.ts";
 
 test("stack is the Mnemonica order", () => {
@@ -66,4 +73,31 @@ test("random questions never leave the requested range", () => {
     assert.equal(cardCode(question.card), cardCode(STACK[question.position - 1]));
     assert.ok(question.askFor === "position" || question.askFor === "card");
   }
+});
+
+test("race questions ask each position and card once in a shuffled order", () => {
+  const questions = buildRaceQuestions(3, 7);
+  assert.equal(questions.length, 10);
+
+  for (let position = 3; position <= 7; position += 1) {
+    assert.equal(questions.filter((question) => question.position === position).length, 2);
+    assert.equal(
+      questions.filter((question) => question.position === position && question.askFor === "position")
+        .length,
+      1,
+    );
+    assert.equal(
+      questions.filter((question) => question.position === position && question.askFor === "card")
+        .length,
+      1,
+    );
+  }
+});
+
+test("race question order can be controlled for deterministic tests", () => {
+  const questions = buildRaceQuestions(1, 2, () => 0);
+  assert.deepEqual(
+    questions.map(({ position, askFor }) => `${position}-${askFor}`),
+    ["1-card", "2-position", "2-card", "1-position"],
+  );
 });

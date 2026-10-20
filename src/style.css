@@ -262,7 +262,7 @@ h1 {
 
 .views {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
   margin: 12px 0;
   padding: 4px;
@@ -280,6 +280,70 @@ h1 {
 
 .views button[aria-selected="true"] {
   background: rgba(255, 255, 255, 0.12);
+}
+
+#race-panel {
+  flex: 1;
+}
+
+.race-panel,
+.race-status {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.race-title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.6rem;
+}
+
+.race-status {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.race-timer,
+.race-progress,
+.race-summary {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.race-timer {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+}
+
+.race-progress {
+  color: var(--muted);
+}
+
+.race-summary {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.mistakes-title {
+  margin: 18px 0 8px;
+  font-size: 1rem;
+}
+
+.mistakes-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 24px;
+}
+
+.mistakes-list li {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
 }
 
 #practice {

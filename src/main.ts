@@ -13,6 +13,7 @@ import {
 import {
   isRightCard,
   isRightPosition,
+  buildRaceQuestions,
   normalizeRange,
   pickQuestion,
   type Question,
@@ -25,6 +26,7 @@ const AUTO_ADVANCE_MS = 1200;
 const scoreValue = must<HTMLElement>("#score-value");
 const scoreMeta = must<HTMLElement>("#score-meta");
 const resetScore = must<HTMLButtonElement>("#reset-score");
+const rangeSelector = must<HTMLElement>(".range");
 const fromInput = must<HTMLInputElement>("#from-input");
 const toInput = must<HTMLInputElement>("#to-input");
 const fromDec = must<HTMLButtonElement>("#from-dec");
@@ -34,8 +36,21 @@ const toInc = must<HTMLButtonElement>("#to-inc");
 const rangeSummary = must<HTMLElement>("#range-summary");
 const presets = must<HTMLElement>("#presets");
 const tabPractice = must<HTMLButtonElement>("#tab-practice");
+const tabRace = must<HTMLButtonElement>("#tab-race");
 const tabStack = must<HTMLButtonElement>("#tab-stack");
 const practice = must<HTMLElement>("#practice");
+const racePanel = must<HTMLElement>("#race-panel");
+const raceSetup = must<HTMLElement>("#race-setup");
+const startRace = must<HTMLButtonElement>("#start-race");
+const raceStatus = must<HTMLElement>("#race-status");
+const raceTimer = must<HTMLElement>("#race-timer");
+const raceProgress = must<HTMLElement>("#race-progress");
+const raceResults = must<HTMLElement>("#race-results");
+const raceSummary = must<HTMLElement>("#race-summary");
+const mistakesTitle = must<HTMLElement>("#mistakes-title");
+const mistakesList = must<HTMLOListElement>("#mistakes-list");
+const noMistakes = must<HTMLElement>("#no-mistakes");
+const restartRace = must<HTMLButtonElement>("#restart-race");
 const stackView = must<HTMLElement>("#stack-view");
 const prompt = must<HTMLElement>("#prompt");
 const ask = must<HTMLElement>("#ask");
@@ -55,7 +70,8 @@ const stackGrid = must<HTMLElement>("#stack-grid");
 const stackNote = must<HTMLElement>("#stack-note");
 
 type Phase = "answering" | "feedback";
-type View = "practice" | "stack";
+type View = "practice" | "race" | "stack";
+type RaceStatus = "idle" | "active" | "finished";
 
 interface Result {
   right: boolean;
@@ -63,12 +79,20 @@ interface Result {
   cardAnswer: Card | null;
 }
 
+interface RaceMistake {
+  question: Question;
+  positionAnswer: number | null;
+  cardAnswer: Card | null;
+}
+
 const initialRange = loadRange();
+const initialQuestion = pickQuestion(initialRange.from, initialRange.to, null);
 
 const state: {
   from: number;
   to: number;
   question: Question;
+  practiceQuestion: Question;
   phase: Phase;
   view: View;
   correct: number;
@@ -80,11 +104,20 @@ const state: {
   pendingTen: boolean;
   result: Result | null;
   timer: number | null;
+  raceStatus: RaceStatus;
+  raceQuestions: Question[];
+  raceIndex: number;
+  raceCorrect: number;
+  raceMistakes: RaceMistake[];
+  raceStartedAt: number | null;
+  raceElapsedMs: number;
+  raceTimer: number | null;
   token: number;
 } = {
   from: initialRange.from,
   to: initialRange.to,
-  question: pickQuestion(initialRange.from, initialRange.to, null),
+  question: initialQuestion,
+  practiceQuestion: initialQuestion,
   phase: "answering",
   view: "practice",
   correct: 0,
@@ -96,6 +129,14 @@ const state: {
   pendingTen: false,
   result: null,
   timer: null,
+  raceStatus: "idle",
+  raceQuestions: [],
+  raceIndex: 0,
+  raceCorrect: 0,
+  raceMistakes: [],
+  raceStartedAt: null,
+  raceElapsedMs: 0,
+  raceTimer: null,
   token: 0,
 };
 
@@ -204,7 +245,10 @@ function bindEvents(): void {
   });
 
   tabPractice.addEventListener("click", () => setView("practice"));
+  tabRace.addEventListener("click", () => setView("race"));
   tabStack.addEventListener("click", () => setView("stack"));
+  startRace.addEventListener("click", startRaceSession);
+  restartRace.addEventListener("click", startRaceSession);
   resetScore.addEventListener("click", resetSession);
   keypad.addEventListener("click", onKeypad);
   checkCard.addEventListener("click", submitCard);
@@ -224,6 +268,7 @@ function commitTypedRange(): void {
 }
 
 function updateRange(range: Range): void {
+  if (isRaceActive()) return;
   const next = normalizeRange(range.from, range.to);
   const changed = next.from !== state.from || next.to !== state.to;
   state.from = next.from;
@@ -238,6 +283,7 @@ function updateRange(range: Range): void {
   if (state.phase === "answering" && (position < next.from || position > next.to)) {
     clearTimer();
     state.question = pickQuestion(next.from, next.to, position);
+    state.practiceQuestion = state.question;
     clearAnswer();
     renderQuestion();
   }
@@ -251,14 +297,163 @@ function syncRangeInputs(force = false): void {
   fromInc.disabled = state.from >= state.to - 1;
   toDec.disabled = state.to <= state.from + 1;
   toInc.disabled = state.to >= 52;
+  const locked = isRaceActive();
+  fromInput.disabled = locked;
+  toInput.disabled = locked;
+  for (const button of presets.querySelectorAll<HTMLButtonElement>("button")) {
+    button.disabled = locked;
+  }
 }
 
 function setView(view: View): void {
+  if (isRaceActive() && view !== "race") return;
   state.view = view;
-  practice.hidden = view !== "practice";
-  stackView.hidden = view !== "stack";
-  tabPractice.setAttribute("aria-selected", String(view === "practice"));
-  tabStack.setAttribute("aria-selected", String(view === "stack"));
+  renderView();
+}
+
+function renderView(): void {
+  const raceActive = isRaceActive();
+  rangeSelector.hidden = raceActive;
+  practice.hidden = state.view !== "practice" && !(state.view === "race" && raceActive);
+  racePanel.hidden = state.view !== "race";
+  stackView.hidden = state.view !== "stack";
+  tabPractice.setAttribute("aria-selected", String(state.view === "practice"));
+  tabRace.setAttribute("aria-selected", String(state.view === "race"));
+  tabStack.setAttribute("aria-selected", String(state.view === "stack"));
+}
+
+function isRaceActive(): boolean {
+  return state.raceStatus === "active";
+}
+
+function startRaceSession(): void {
+  clearTimer();
+  clearRaceTimer();
+  if (state.view === "practice") state.practiceQuestion = state.question;
+  state.raceQuestions = buildRaceQuestions(state.from, state.to);
+  state.raceIndex = 0;
+  state.raceCorrect = 0;
+  state.raceMistakes = [];
+  state.raceElapsedMs = 0;
+  state.raceStartedAt = performance.now();
+  state.raceStatus = "active";
+  state.view = "race";
+  state.phase = "answering";
+  state.result = null;
+  state.question = state.raceQuestions[0];
+  clearAnswer();
+  state.raceTimer = window.setInterval(updateRaceTimer, 100);
+  render();
+}
+
+function recordRaceAnswer(
+  right: boolean,
+  positionAnswer: number | null,
+  cardAnswer: Card | null,
+): void {
+  if (!isRaceActive()) return;
+  if (right) {
+    state.raceCorrect += 1;
+  } else {
+    state.raceMistakes.push({
+      question: state.question,
+      positionAnswer,
+      cardAnswer,
+    });
+  }
+
+  state.raceIndex += 1;
+  clearAnswer();
+  if (state.raceIndex === state.raceQuestions.length) {
+    finishRace();
+    return;
+  }
+
+  state.question = state.raceQuestions[state.raceIndex];
+  render();
+}
+
+function finishRace(): void {
+  clearRaceTimer();
+  state.raceElapsedMs = performance.now() - (state.raceStartedAt ?? performance.now());
+  state.raceStatus = "finished";
+  state.question = state.practiceQuestion;
+  state.phase = "answering";
+  state.result = null;
+  clearAnswer();
+  render();
+}
+
+function updateRaceTimer(): void {
+  if (state.raceStartedAt == null) return;
+  state.raceElapsedMs = performance.now() - state.raceStartedAt;
+  raceTimer.textContent = formatElapsed(state.raceElapsedMs);
+}
+
+function clearRaceTimer(): void {
+  if (state.raceTimer != null) {
+    window.clearInterval(state.raceTimer);
+    state.raceTimer = null;
+  }
+}
+
+function formatElapsed(milliseconds: number): string {
+  const seconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    return `${String(hours).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+  }
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function renderRace(): void {
+  const active = isRaceActive();
+  const finished = state.raceStatus === "finished";
+  raceSetup.hidden = active || finished;
+  raceStatus.hidden = !active;
+  raceResults.hidden = !finished;
+
+  if (active) {
+    raceTimer.textContent = formatElapsed(state.raceElapsedMs);
+    raceProgress.textContent = `Pregunta ${state.raceIndex + 1} de ${state.raceQuestions.length}`;
+  }
+  if (!finished) return;
+
+  const total = state.raceQuestions.length;
+  const percent = Math.round((state.raceCorrect / total) * 100);
+  raceSummary.textContent =
+    `Tiempo: ${formatElapsed(state.raceElapsedMs)} · ` +
+    `Puntuación: ${state.raceCorrect}/${total} (${percent}%)`;
+  mistakesTitle.hidden = state.raceMistakes.length === 0;
+  noMistakes.hidden = state.raceMistakes.length !== 0;
+  mistakesList.replaceChildren();
+  for (const mistake of state.raceMistakes) {
+    mistakesList.append(renderRaceMistake(mistake));
+  }
+}
+
+function renderRaceMistake(mistake: RaceMistake): HTMLLIElement {
+  const { question, positionAnswer, cardAnswer } = mistake;
+  const item = document.createElement("li");
+  const promptText = document.createElement("span");
+  const answerText = document.createElement("span");
+  answerText.className = "you-said";
+
+  if (question.askFor === "position") {
+    promptText.append("¿Posición de ", cardSpan(question.card), "?");
+    answerText.textContent = `Tu respuesta: ${positionAnswer}. `;
+    answerText.append(`Correcta: ${question.position}.`);
+  } else {
+    promptText.textContent = `¿Qué carta ocupa la posición ${question.position}?`;
+    answerText.append("Tu respuesta: ");
+    if (cardAnswer) answerText.append(cardSpan(cardAnswer));
+    answerText.append(" · Correcta: ", cardSpan(question.card), ".");
+  }
+
+  item.append(promptText, answerText);
+  return item;
 }
 
 function resetSession(): void {
@@ -312,14 +507,18 @@ function submitPosition(): void {
   if (!/^\d+$/.test(state.draft)) return;
   const answer = Number(state.draft);
   if (answer < 1 || answer > 52) return;
-  settle(isRightPosition(state.question, answer), answer, null);
+  const right = isRightPosition(state.question, answer);
+  if (isRaceActive()) recordRaceAnswer(right, answer, null);
+  else settle(right, answer, null);
 }
 
 function submitCard(): void {
   if (state.phase !== "answering" || state.question.askFor !== "card") return;
   if (!state.rank || !state.suit) return;
   const answer = { rank: state.rank, suit: state.suit };
-  settle(isRightCard(state.question, answer), null, answer);
+  const right = isRightCard(state.question, answer);
+  if (isRaceActive()) recordRaceAnswer(right, null, answer);
+  else settle(right, null, answer);
 }
 
 function settle(right: boolean, positionAnswer: number | null, cardAnswer: Card | null): void {
@@ -360,6 +559,7 @@ function advance(): void {
   state.phase = "answering";
   state.result = null;
   state.question = pickQuestion(state.from, state.to, state.question.position);
+  state.practiceQuestion = state.question;
   clearAnswer();
   render();
 }
@@ -375,6 +575,8 @@ function render(): void {
   syncRangeInputs();
   renderPresets();
   renderScore();
+  renderView();
+  renderRace();
   renderQuestion();
   renderStackState();
 }
@@ -400,6 +602,7 @@ function renderPresets(): void {
 function renderQuestion(): void {
   const question = state.question;
   const answering = state.phase === "answering";
+  const raceActive = isRaceActive();
   const result = state.result;
   practice.classList.toggle("wrong-feedback", result != null && !result.right);
   prompt.replaceChildren();
@@ -415,7 +618,7 @@ function renderQuestion(): void {
   prompt.append(flipCard(question, result));
   positionEntry.hidden = !(answering && question.askFor === "position");
   cardEntry.hidden = !(answering && question.askFor === "card");
-  feedbackBlock.hidden = answering;
+  feedbackBlock.hidden = answering || raceActive;
 
   prompt.classList.remove("swap");
   void prompt.offsetWidth;
@@ -643,7 +846,7 @@ function onKeyDown(event: KeyboardEvent): void {
     return;
   }
 
-  if (state.view !== "practice") return;
+  if (state.view !== "practice" && !(state.view === "race" && isRaceActive())) return;
 
   if (state.question.askFor === "position") {
     if (/^[0-9]$/.test(event.key)) {

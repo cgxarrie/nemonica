@@ -49,6 +49,30 @@ export function pickQuestion(
   return { position, card: STACK[position - 1], askFor };
 }
 
+export function buildRaceQuestions(
+  from: number,
+  to: number,
+  random: () => number = Math.random,
+): Question[] {
+  const range = normalizeRange(from, to);
+  const questions: Question[] = [];
+
+  for (let position = range.from; position <= range.to; position += 1) {
+    const card = STACK[position - 1];
+    questions.push(
+      { position, card, askFor: "position" },
+      { position, card, askFor: "card" },
+    );
+  }
+
+  for (let index = questions.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [questions[index], questions[swapIndex]] = [questions[swapIndex], questions[index]];
+  }
+
+  return questions;
+}
+
 export function isRightPosition(question: Question, answer: number): boolean {
   return answer === question.position;
 }
