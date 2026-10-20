@@ -548,17 +548,17 @@ function renderFeedback(result: Result): void {
   title.textContent = result.right ? "Correcto" : "Incorrecto";
   feedback.append(title);
 
-  const detail = document.createElement("span");
-  if (!result.right && question.askFor === "position") {
-    detail.textContent = `Respuesta correcta: posición ${question.position}.`;
-  } else if (!result.right) {
-    detail.append("Respuesta correcta: ", cardSpan(question.card), ".");
+  if (!result.right) {
+    feedback.append(correctAnswerPair(question));
   } else if (question.askFor === "position") {
+    const detail = document.createElement("span");
     detail.append(cardSpan(question.card), ` es la posición ${question.position}.`);
+    feedback.append(detail);
   } else {
+    const detail = document.createElement("span");
     detail.append(`La posición ${question.position} es `, cardSpan(question.card), ".");
+    feedback.append(detail);
   }
-  feedback.append(detail);
 
   if (!result.right) {
     const yours = document.createElement("span");
@@ -575,6 +575,37 @@ function renderFeedback(result: Result): void {
     continueHint.textContent = "Pulsa Siguiente para continuar.";
     feedback.append(continueHint);
   }
+}
+
+function correctAnswerPair(question: Question): HTMLElement {
+  const pair = document.createElement("div");
+  pair.className = "correct-answer-pair";
+  pair.setAttribute("role", "group");
+  pair.setAttribute(
+    "aria-label",
+    `Respuesta correcta: posición ${question.position}, ${cardSpoken(question.card)}.`,
+  );
+
+  const position = document.createElement("div");
+  position.className = "correct-answer-item";
+  const positionLabel = document.createElement("span");
+  positionLabel.className = "correct-answer-label";
+  positionLabel.textContent = "Posición";
+  const positionVisual = positionCard(question.position);
+  positionVisual.classList.add("correct-answer-visual");
+  position.append(positionLabel, positionVisual);
+
+  const card = document.createElement("div");
+  card.className = "correct-answer-item";
+  const cardLabel = document.createElement("span");
+  cardLabel.className = "correct-answer-label";
+  cardLabel.textContent = "Carta";
+  const cardVisual = playingCard(question.card);
+  cardVisual.classList.add("correct-answer-visual");
+  card.append(cardLabel, cardVisual);
+
+  pair.append(position, card);
+  return pair;
 }
 
 function cardSpan(card: Card): HTMLElement {
