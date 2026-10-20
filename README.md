@@ -1,6 +1,6 @@
-# Nemonica
+# Mnemónica
 
-Trainer for Juan Tamariz’s Mnemonica stack. The app keeps the 52-card order and quizzes it in both directions: it shows a card and asks for its position, or shows a position and asks for the card.
+Trainer for Juan Tamariz’s Mnemónica stack. The app keeps the 52-card order and quizzes it in both directions: it shows a card and asks for its position, or shows a position and asks for the card.
 
 The interface is in Spanish.
 
@@ -30,8 +30,8 @@ npm run preview
 ## Docker
 
 ```bash
-docker build -t nemonica .
-docker run --rm -p 8080:80 nemonica
+docker build -t mnemónica .
+docker run --rm -p 8080:80 mnemónica
 ```
 
 Open http://localhost:8080.

@@ -20,7 +20,7 @@ import {
   type Range,
 } from "./quiz.ts";
 
-const STORAGE_KEY = "nemonica-range";
+const STORAGE_KEY = "mnemónica-range";
 const AUTO_ADVANCE_MS = 1200;
 
 const scoreValue = must<HTMLElement>("#score-value");
