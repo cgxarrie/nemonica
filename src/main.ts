@@ -401,6 +401,7 @@ function renderQuestion(): void {
   const question = state.question;
   const answering = state.phase === "answering";
   const result = state.result;
+  practice.classList.toggle("wrong-feedback", result != null && !result.right);
   prompt.replaceChildren();
 
   if (question.askFor === "position") {

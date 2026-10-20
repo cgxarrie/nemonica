@@ -289,6 +289,14 @@ h1 {
   min-height: 0;
 }
 
+#practice.wrong-feedback {
+  justify-content: center;
+}
+
+#practice.wrong-feedback .stage {
+  display: none;
+}
+
 .stage {
   flex: 1;
   display: flex;
