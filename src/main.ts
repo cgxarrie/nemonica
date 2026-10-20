@@ -602,6 +602,7 @@ function renderPresets(): void {
 function renderQuestion(): void {
   const question = state.question;
   const answering = state.phase === "answering";
+  const raceActive = isRaceActive();
   const result = state.result;
   practice.classList.toggle("wrong-feedback", result != null && !result.right);
   prompt.replaceChildren();
