@@ -26,6 +26,7 @@ const AUTO_ADVANCE_MS = 1200;
 const scoreValue = must<HTMLElement>("#score-value");
 const scoreMeta = must<HTMLElement>("#score-meta");
 const resetScore = must<HTMLButtonElement>("#reset-score");
+const rangeSelector = must<HTMLElement>(".range");
 const fromInput = must<HTMLInputElement>("#from-input");
 const toInput = must<HTMLInputElement>("#to-input");
 const fromDec = must<HTMLButtonElement>("#from-dec");
@@ -312,6 +313,7 @@ function setView(view: View): void {
 
 function renderView(): void {
   const raceActive = isRaceActive();
+  rangeSelector.hidden = raceActive;
   practice.hidden = state.view !== "practice" && !(state.view === "race" && raceActive);
   racePanel.hidden = state.view !== "race";
   stackView.hidden = state.view !== "stack";
