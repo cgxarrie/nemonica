@@ -400,24 +400,18 @@ function renderPresets(): void {
 function renderQuestion(): void {
   const question = state.question;
   const answering = state.phase === "answering";
+  const result = state.result;
   prompt.replaceChildren();
 
   if (question.askFor === "position") {
-    prompt.append(playingCard(question.card));
-    ask.textContent = "¿Qué posición?";
+    ask.textContent = answering ? "¿Qué posición?" : "";
     practice.setAttribute("aria-label", `${cardSpoken(question.card)}. ¿Qué posición?`);
   } else {
-    const kicker = document.createElement("p");
-    kicker.className = "kicker";
-    kicker.textContent = "Posición";
-    const mark = document.createElement("p");
-    mark.className = "position-mark";
-    mark.textContent = String(question.position);
-    prompt.append(kicker, mark);
-    ask.textContent = "¿Qué carta?";
+    ask.textContent = answering ? "¿Qué carta?" : "";
     practice.setAttribute("aria-label", `Posición ${question.position}. ¿Qué carta?`);
   }
 
+  prompt.append(flipCard(question, result));
   positionEntry.hidden = !(answering && question.askFor === "position");
   cardEntry.hidden = !(answering && question.askFor === "card");
   feedbackBlock.hidden = answering;
@@ -428,7 +422,68 @@ function renderQuestion(): void {
 
   renderDraft();
   renderSelection();
-  if (!answering && state.result) renderFeedback(state.result);
+  if (result) renderFeedback(result);
+}
+
+function flipCard(question: Question, result: Result | null): HTMLElement {
+  const card = document.createElement("div");
+  card.className = "flip-card";
+  card.setAttribute("aria-hidden", "true");
+
+  const inner = document.createElement("div");
+  inner.className = `flip-card-inner${result ? " is-flipped" : ""}`;
+
+  const front = document.createElement("div");
+  front.className = "flip-face flip-front";
+  const back = document.createElement("div");
+  back.className = "flip-face flip-back";
+
+  if (question.askFor === "position") {
+    front.append(playingCard(question.card));
+    back.append(positionCardBack(question.position));
+  } else {
+    front.append(positionCard(question.position));
+    back.append(playingCard(question.card));
+  }
+
+  if (result) back.append(feedbackMark(result.right));
+  inner.append(front, back);
+  card.append(inner);
+  return card;
+}
+
+function positionCard(position: number): HTMLElement {
+  const face = document.createElement("div");
+  face.className = "position-card";
+
+  const kicker = document.createElement("span");
+  kicker.className = "kicker";
+  kicker.textContent = "Posición";
+
+  const mark = document.createElement("span");
+  mark.className = "position-mark";
+  mark.textContent = String(position);
+
+  face.append(kicker, mark);
+  return face;
+}
+
+function positionCardBack(position: number): HTMLElement {
+  const back = document.createElement("div");
+  back.className = "card-back";
+
+  const mark = document.createElement("span");
+  mark.className = "back-position";
+  mark.textContent = String(position);
+  back.append(mark);
+  return back;
+}
+
+function feedbackMark(right: boolean): HTMLElement {
+  const mark = document.createElement("span");
+  mark.className = `feedback-mark ${right ? "good" : "bad"}`;
+  mark.textContent = right ? "✓" : "✕";
+  return mark;
 }
 
 function playingCard(card: Card): HTMLElement {

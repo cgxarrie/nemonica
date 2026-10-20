@@ -303,19 +303,118 @@ h1 {
   font-size: 1.05rem;
 }
 
-.playing-card {
-  position: relative;
+.flip-card {
   width: 132px;
   height: 184px;
+  perspective: 900px;
+  user-select: none;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.flip-card-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
   border-radius: 14px;
+}
+
+.flip-back {
+  transform: rotateY(180deg);
+}
+
+.playing-card,
+.position-card,
+.card-back {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+}
+
+.playing-card,
+.position-card {
   background: #fbf7ef;
   color: #1c1917;
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
-  user-select: none;
 }
 
 .playing-card.red {
   color: #b42318;
+}
+
+.position-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.position-card .kicker {
+  color: #6b6256;
+}
+
+.card-back {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(246, 241, 231, 0.52);
+  background: repeating-linear-gradient(45deg, #174b39, #174b39 8px, #19513d 8px, #19513d 16px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
+}
+
+.card-back::before {
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(246, 241, 231, 0.58);
+  border-radius: 8px;
+  content: "";
+}
+
+.back-position {
+  z-index: 1;
+  color: #fbf7ef;
+  font-family: var(--serif);
+  font-size: 5.2rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.feedback-mark {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 2;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 2px solid #fbf7ef;
+  border-radius: 50%;
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 1.65rem;
+  font-weight: 750;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.feedback-mark.good {
+  background: #23834d;
+}
+
+.feedback-mark.bad {
+  background: #c03932;
 }
 
 .corner {
@@ -347,7 +446,7 @@ h1 {
 }
 
 .position-mark {
-  margin: 8px 0 0;
+  margin: 0;
   font-family: var(--serif);
   font-size: 6.25rem;
   font-weight: 560;
@@ -602,7 +701,7 @@ h1 {
 }
 
 @media (max-height: 760px) {
-  .playing-card {
+  .flip-card {
     width: 104px;
     height: 146px;
   }
@@ -649,7 +748,7 @@ h1 {
     padding-top: 28px;
   }
 
-  .playing-card {
+  .flip-card {
     width: 148px;
     height: 206px;
   }
