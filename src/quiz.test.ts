@@ -7,8 +7,11 @@ import {
   isRightPosition,
   normalizeRange,
   pickQuestion,
+  pickSuitPositionRank,
+  positionsForRank,
+  SUIT_POSITION_ORDER,
 } from "./quiz.ts";
-import { STACK, cardCode } from "./stack.ts";
+import { STACK, cardCode, type Rank } from "./stack.ts";
 
 test("stack is the Mnemónica order", () => {
   assert.equal(STACK.length, 52);
@@ -100,4 +103,24 @@ test("race question order can be controlled for deterministic tests", () => {
     questions.map(({ position, askFor }) => `${position}-${askFor}`),
     ["1-card", "2-position", "2-card", "1-position"],
   );
+});
+
+test("suit positions are returned in Clubs, Hearts, Spades, Diamonds order", () => {
+  assert.deepEqual(SUIT_POSITION_ORDER, ["c", "h", "s", "d"]);
+  const positions = positionsForRank("A");
+  assert.deepEqual(
+    positions.map(({ suit }) => suit),
+    ["c", "h", "s", "d"],
+  );
+  for (const { suit, position } of positions) {
+    assert.equal(STACK[position - 1].rank, "A");
+    assert.equal(STACK[position - 1].suit, suit);
+  }
+});
+
+test("suit-position rank selection avoids repeating the previous rank", () => {
+  for (const rank of ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"] as Rank[]) {
+    const next = pickSuitPositionRank(rank, () => 0);
+    assert.notEqual(next, rank);
+  }
 });

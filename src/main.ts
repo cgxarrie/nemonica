@@ -16,6 +16,9 @@ import {
   buildRaceQuestions,
   normalizeRange,
   pickQuestion,
+  pickSuitPositionRank,
+  positionsForRank,
+  SUIT_POSITION_ORDER,
   type Question,
   type Range,
 } from "./quiz.ts";
@@ -38,6 +41,7 @@ const presets = must<HTMLElement>("#presets");
 const tabPractice = must<HTMLButtonElement>("#tab-practice");
 const tabRace = must<HTMLButtonElement>("#tab-race");
 const tabStack = must<HTMLButtonElement>("#tab-stack");
+const tabSuitPositions = must<HTMLButtonElement>("#tab-suit-positions");
 const practice = must<HTMLElement>("#practice");
 const racePanel = must<HTMLElement>("#race-panel");
 const raceSetup = must<HTMLElement>("#race-setup");
@@ -52,6 +56,12 @@ const mistakesList = must<HTMLOListElement>("#mistakes-list");
 const noMistakes = must<HTMLElement>("#no-mistakes");
 const restartRace = must<HTMLButtonElement>("#restart-race");
 const stackView = must<HTMLElement>("#stack-view");
+const suitPositionsView = must<HTMLElement>("#suit-positions-view");
+const suitPositionsRank = must<HTMLElement>("#suit-positions-rank");
+const suitPositionInputs = must<HTMLElement>("#suit-position-inputs");
+const checkSuitPositions = must<HTMLButtonElement>("#check-suit-positions");
+const nextSuitPositions = must<HTMLButtonElement>("#next-suit-positions");
+const suitPositionsFeedback = must<HTMLElement>("#suit-positions-feedback");
 const prompt = must<HTMLElement>("#prompt");
 const ask = must<HTMLElement>("#ask");
 const positionEntry = must<HTMLElement>("#position-entry");
@@ -70,7 +80,7 @@ const stackGrid = must<HTMLElement>("#stack-grid");
 const stackNote = must<HTMLElement>("#stack-note");
 
 type Phase = "answering" | "feedback";
-type View = "practice" | "race" | "stack";
+type View = "practice" | "race" | "stack" | "suit-positions";
 type RaceStatus = "idle" | "active" | "finished";
 
 interface Result {
@@ -87,6 +97,9 @@ interface RaceMistake {
 
 const initialRange = loadRange();
 const initialQuestion = pickQuestion(initialRange.from, initialRange.to, null);
+let suitPositionRank = pickSuitPositionRank(null);
+let suitPositionAnswers: string[] = Array(SUIT_POSITION_ORDER.length).fill("");
+let suitPositionsSubmitted = false;
 
 const state: {
   from: number;
@@ -142,6 +155,7 @@ const state: {
 
 buildRankButtons();
 buildSuitButtons();
+buildSuitPositionInputs();
 buildStack();
 bindEvents();
 render();
@@ -191,6 +205,45 @@ function buildSuitButtons(): void {
     button.addEventListener("click", () => selectSuit(suit));
     suitsEl.append(button);
   }
+}
+
+function buildSuitPositionInputs(): void {
+  const names: Record<Suit, string> = {
+    c: "Tréboles",
+    h: "Corazones",
+    s: "Picas",
+    d: "Diamantes",
+  };
+  for (const [index, suit] of SUIT_POSITION_ORDER.entries()) {
+    const label = document.createElement("label");
+    label.className = "suit-position-row";
+    const suitName = document.createElement("span");
+    suitName.className = `suit-position-name ${isRed(suit) ? "red" : "black"}`;
+    suitName.textContent = `${names[suit]} ${SUIT_SYMBOL[suit]}`;
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "1";
+    input.max = "52";
+    input.inputMode = "numeric";
+    input.autocomplete = "off";
+    input.setAttribute("aria-label", `Posición de ${names[suit].toLowerCase()}`);
+    input.addEventListener("input", () => {
+      suitPositionAnswers[index] = input.value;
+      renderSuitPositions();
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        if (suitPositionsSubmitted) nextSuitPositionRound();
+        else submitSuitPositions();
+      }
+    });
+    label.append(suitName, input);
+    suitPositionInputs.append(label);
+  }
+  checkSuitPositions.addEventListener("click", submitSuitPositions);
+  nextSuitPositions.addEventListener("click", nextSuitPositionRound);
 }
 
 function buildStack(): void {
@@ -247,6 +300,7 @@ function bindEvents(): void {
   tabPractice.addEventListener("click", () => setView("practice"));
   tabRace.addEventListener("click", () => setView("race"));
   tabStack.addEventListener("click", () => setView("stack"));
+  tabSuitPositions.addEventListener("click", () => setView("suit-positions"));
   startRace.addEventListener("click", startRaceSession);
   restartRace.addEventListener("click", startRaceSession);
   resetScore.addEventListener("click", resetSession);
@@ -313,13 +367,15 @@ function setView(view: View): void {
 
 function renderView(): void {
   const raceActive = isRaceActive();
-  rangeSelector.hidden = raceActive;
+  rangeSelector.hidden = raceActive || state.view === "suit-positions";
   practice.hidden = state.view !== "practice" && !(state.view === "race" && raceActive);
   racePanel.hidden = state.view !== "race";
   stackView.hidden = state.view !== "stack";
+  suitPositionsView.hidden = state.view !== "suit-positions";
   tabPractice.setAttribute("aria-selected", String(state.view === "practice"));
   tabRace.setAttribute("aria-selected", String(state.view === "race"));
   tabStack.setAttribute("aria-selected", String(state.view === "stack"));
+  tabSuitPositions.setAttribute("aria-selected", String(state.view === "suit-positions"));
 }
 
 function isRaceActive(): boolean {
@@ -463,6 +519,90 @@ function resetSession(): void {
   renderScore();
 }
 
+function submitSuitPositions(): void {
+  if (suitPositionsSubmitted) return;
+  const answers = suitPositionAnswers.map((answer) => {
+    if (!/^\d{1,2}$/.test(answer)) return null;
+    const position = Number(answer);
+    return position >= 1 && position <= 52 ? position : null;
+  });
+  if (answers.some((answer) => answer == null)) return;
+
+  const correctPositions = positionsForRank(suitPositionRank);
+  const right = correctPositions.every(({ position }, index) => answers[index] === position);
+  state.attempts += 1;
+  if (right) {
+    state.correct += 1;
+    state.streak += 1;
+  } else {
+    state.streak = 0;
+  }
+  suitPositionsSubmitted = true;
+  renderScore();
+  renderSuitPositions();
+  nextSuitPositions.focus();
+}
+
+function nextSuitPositionRound(): void {
+  if (!suitPositionsSubmitted) return;
+  suitPositionRank = pickSuitPositionRank(suitPositionRank);
+  suitPositionAnswers = Array(SUIT_POSITION_ORDER.length).fill("");
+  suitPositionsSubmitted = false;
+  renderSuitPositions();
+  suitPositionInputs.querySelector<HTMLInputElement>("input")?.focus();
+}
+
+function renderSuitPositions(): void {
+  suitPositionsRank.textContent = suitPositionRank;
+  const correctPositions = positionsForRank(suitPositionRank);
+  const inputs = suitPositionInputs.querySelectorAll<HTMLInputElement>("input");
+  inputs.forEach((input, index) => {
+    const row = input.closest<HTMLElement>(".suit-position-row");
+    if (!row) throw new Error("Missing suit-position row");
+    row.classList.toggle(
+      "correct",
+      suitPositionsSubmitted && Number(suitPositionAnswers[index]) === correctPositions[index].position,
+    );
+    row.classList.toggle(
+      "incorrect",
+      suitPositionsSubmitted && Number(suitPositionAnswers[index]) !== correctPositions[index].position,
+    );
+    input.disabled = suitPositionsSubmitted;
+    input.value = suitPositionAnswers[index];
+    let answer = row.querySelector<HTMLElement>(".suit-position-answer");
+    if (suitPositionsSubmitted) {
+      if (!answer) {
+        answer = document.createElement("span");
+        answer.className = "suit-position-answer";
+        row.append(answer);
+      }
+      answer.textContent = `Correcta: ${correctPositions[index].position}`;
+    } else {
+      answer?.remove();
+    }
+  });
+
+  const ready = suitPositionAnswers.every((answer) => {
+    if (!/^\d{1,2}$/.test(answer)) return false;
+    const position = Number(answer);
+    return position >= 1 && position <= 52;
+  });
+  checkSuitPositions.disabled = !ready || suitPositionsSubmitted;
+  checkSuitPositions.hidden = suitPositionsSubmitted;
+  nextSuitPositions.hidden = !suitPositionsSubmitted;
+  suitPositionsFeedback.hidden = !suitPositionsSubmitted;
+  if (suitPositionsSubmitted) {
+    const allCorrect = correctPositions.every(
+      ({ position }, index) => Number(suitPositionAnswers[index]) === position,
+    );
+    suitPositionsFeedback.textContent = allCorrect
+      ? "¡Las cuatro posiciones son correctas!"
+      : "Revisa las posiciones correctas indicadas para cada palo.";
+    suitPositionsFeedback.classList.toggle("good", allCorrect);
+    suitPositionsFeedback.classList.toggle("bad", !allCorrect);
+  }
+}
+
 function selectRank(rank: Rank): void {
   if (state.phase !== "answering" || state.question.askFor !== "card") return;
   state.rank = state.rank === rank ? null : rank;
@@ -579,6 +719,7 @@ function render(): void {
   renderRace();
   renderQuestion();
   renderStackState();
+  renderSuitPositions();
 }
 
 function renderScore(): void {
@@ -837,6 +978,7 @@ function onKeyDown(event: KeyboardEvent): void {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   const target = event.target;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+  if (state.view === "suit-positions") return;
 
   if (state.phase === "feedback") {
     if (event.key === "Enter") {

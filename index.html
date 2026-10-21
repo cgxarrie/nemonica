@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0e2c22" />
     <meta
       name="description"
-      content="Practica la baraja Mnemónica. Di la posición de una carta, o la carta de una posición, dentro del rango que elijas."
+      content="Practica la baraja Mnemónica. Di la posición de una carta, identifica cartas por su posición o encuentra las posiciones de un valor en cada palo."
     />
     <title>Mnemónica</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -95,6 +95,15 @@
         <button type="button" role="tab" id="tab-stack" aria-selected="false" aria-controls="stack-view">
           Mazo
         </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-suit-positions"
+          aria-selected="false"
+          aria-controls="suit-positions-view"
+        >
+          Suit Positions
+        </button>
       </div>
 
       <section id="race-panel" role="tabpanel" aria-labelledby="tab-race" hidden>
@@ -159,6 +168,18 @@
       <section id="stack-view" role="tabpanel" aria-labelledby="tab-stack" hidden>
         <p class="hint" id="stack-note"></p>
         <ol class="stack-grid" id="stack-grid"></ol>
+      </section>
+
+      <section id="suit-positions-view" role="tabpanel" aria-labelledby="tab-suit-positions" hidden>
+        <div class="suit-positions-panel">
+          <p class="race-title">Suit Positions</p>
+          <p class="hint">Indica la posición de cada carta con este valor. Responde en el orden de los palos.</p>
+          <p class="suit-positions-prompt">Valor: <strong id="suit-positions-rank"></strong></p>
+          <div id="suit-position-inputs" class="suit-position-inputs"></div>
+          <button type="button" id="check-suit-positions" class="check">Comprobar</button>
+          <p id="suit-positions-feedback" class="suit-positions-feedback" role="status" hidden></p>
+          <button type="button" id="next-suit-positions" class="next" hidden>Siguiente valor</button>
+        </div>
       </section>
     </div>
     <noscript>Mnemónica necesita JavaScript para funcionar.</noscript>

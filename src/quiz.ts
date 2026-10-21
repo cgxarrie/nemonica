@@ -1,4 +1,6 @@
-import { STACK, sameCard, type Card } from "./stack.ts";
+import { RANKS, STACK, sameCard, type Card, type Rank, type Suit } from "./stack.ts";
+
+export const SUIT_POSITION_ORDER: readonly Suit[] = ["c", "h", "s", "d"];
 
 /** "position" shows a card and asks where it sits. "card" shows a position and asks which card. */
 export type AskFor = "position" | "card";
@@ -12,6 +14,26 @@ export interface Question {
 export interface Range {
   from: number;
   to: number;
+}
+
+export interface SuitPosition {
+  suit: Suit;
+  position: number;
+}
+
+export function positionsForRank(rank: Rank): SuitPosition[] {
+  return SUIT_POSITION_ORDER.map((suit) => ({
+    suit,
+    position: STACK.findIndex((card) => card.rank === rank && card.suit === suit) + 1,
+  }));
+}
+
+export function pickSuitPositionRank(
+  previous: Rank | null,
+  random: () => number = Math.random,
+): Rank {
+  const pool = RANKS.filter((rank) => rank !== previous);
+  return pool[Math.floor(random() * pool.length)];
 }
 
 export function clampPosition(n: number): number {

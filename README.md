@@ -1,6 +1,6 @@
 # Mnemónica
 
-Trainer for Juan Tamariz’s Mnemónica stack. The app keeps the 52-card order and quizzes it in both directions: it shows a card and asks for its position, or shows a position and asks for the card.
+Trainer for Juan Tamariz’s Mnemónica stack. The app keeps the 52-card order and quizzes it in both directions: it shows a card and asks for its position, or shows a position and asks for the card. **Suit Positions** shows a rank and asks for the position of that card in Clubs, Hearts, Spades, and Diamonds order.
 
 The interface is in Spanish.
 
