@@ -106,13 +106,22 @@
         </button>
       </div>
 
+      <div id="question-mode-selector" class="question-mode-selector">
+        <label for="question-mode">Preguntar por</label>
+        <select id="question-mode">
+          <option value="cards">Cartas</option>
+          <option value="positions">Posiciones</option>
+          <option value="both" selected>Ambos</option>
+        </select>
+      </div>
+      <p class="hint question-mode-help">
+        Cartas: identifica la carta de una posición. Posiciones: indica dónde está una carta. Ambos: mezcla las dos preguntas.
+      </p>
+
       <section id="race-panel" role="tabpanel" aria-labelledby="tab-race" hidden>
         <div id="race-setup" class="race-panel">
           <p class="race-title">Carrera</p>
-          <p class="hint">
-            Responde una vez por cada carta y una vez por cada posición del rango, en orden aleatorio.
-            No verás si has acertado hasta el final.
-          </p>
+          <p class="hint" id="race-mode-hint"></p>
           <button type="button" id="start-race" class="check">Empezar carrera</button>
         </div>
         <div id="race-status" class="race-status" hidden>

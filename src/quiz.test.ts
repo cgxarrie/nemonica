@@ -9,6 +9,7 @@ import {
   pickQuestion,
   pickSuitPositionRank,
   positionsForRank,
+  type QuestionMode,
   SUIT_POSITION_ORDER,
 } from "./quiz.ts";
 import { STACK, cardCode, type Rank } from "./stack.ts";
@@ -78,6 +79,15 @@ test("random questions never leave the requested range", () => {
   }
 });
 
+test("practice question mode selects the requested question direction", () => {
+  const cards = pickQuestion(1, 10, null, () => 0, "cards");
+  const positions = pickQuestion(1, 10, null, () => 0, "positions");
+  const both = pickQuestion(1, 10, null, () => 0, "both");
+  assert.equal(cards.askFor, "card");
+  assert.equal(positions.askFor, "position");
+  assert.equal(both.askFor, "position");
+});
+
 test("race questions ask each position and card once in a shuffled order", () => {
   const questions = buildRaceQuestions(3, 7);
   assert.equal(questions.length, 10);
@@ -95,6 +105,21 @@ test("race questions ask each position and card once in a shuffled order", () =>
       1,
     );
   }
+});
+
+test("race questions include only the selected question direction", () => {
+  const expected: Record<QuestionMode, "card" | "position"> = {
+    cards: "card",
+    positions: "position",
+    both: "position",
+  };
+  for (const mode of ["cards", "positions"] as const) {
+    const questions = buildRaceQuestions(3, 7, () => 0, mode);
+    assert.equal(questions.length, 5);
+    assert.ok(questions.every((question) => question.askFor === expected[mode]));
+  }
+
+  assert.equal(buildRaceQuestions(3, 7, () => 0, "both").length, 10);
 });
 
 test("race question order can be controlled for deterministic tests", () => {

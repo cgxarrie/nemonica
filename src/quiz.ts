@@ -4,6 +4,7 @@ export const SUIT_POSITION_ORDER: readonly Suit[] = ["c", "h", "s", "d"];
 
 /** "position" shows a card and asks where it sits. "card" shows a position and asks which card. */
 export type AskFor = "position" | "card";
+export type QuestionMode = "cards" | "positions" | "both";
 
 export interface Question {
   position: number;
@@ -59,6 +60,7 @@ export function pickQuestion(
   to: number,
   previous: number | null,
   random: () => number = Math.random,
+  mode: QuestionMode = "both",
 ): Question {
   const range = normalizeRange(from, to);
   const pool: number[] = [];
@@ -67,7 +69,9 @@ export function pickQuestion(
   }
 
   const position = pool[Math.floor(random() * pool.length)];
-  const askFor: AskFor = random() < 0.5 ? "position" : "card";
+  const askFor = mode === "both"
+    ? (random() < 0.5 ? "position" : "card")
+    : mode === "positions" ? "position" : "card";
   return { position, card: STACK[position - 1], askFor };
 }
 
@@ -75,16 +79,15 @@ export function buildRaceQuestions(
   from: number,
   to: number,
   random: () => number = Math.random,
+  mode: QuestionMode = "both",
 ): Question[] {
   const range = normalizeRange(from, to);
   const questions: Question[] = [];
 
   for (let position = range.from; position <= range.to; position += 1) {
     const card = STACK[position - 1];
-    questions.push(
-      { position, card, askFor: "position" },
-      { position, card, askFor: "card" },
-    );
+    if (mode !== "cards") questions.push({ position, card, askFor: "position" });
+    if (mode !== "positions") questions.push({ position, card, askFor: "card" });
   }
 
   for (let index = questions.length - 1; index > 0; index -= 1) {

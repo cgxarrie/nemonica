@@ -20,6 +20,7 @@ import {
   positionsForRank,
   SUIT_POSITION_ORDER,
   type Question,
+  type QuestionMode,
   type Range,
 } from "./quiz.ts";
 
@@ -42,9 +43,12 @@ const tabPractice = must<HTMLButtonElement>("#tab-practice");
 const tabRace = must<HTMLButtonElement>("#tab-race");
 const tabStack = must<HTMLButtonElement>("#tab-stack");
 const tabSuitPositions = must<HTMLButtonElement>("#tab-suit-positions");
+const questionModeSelector = must<HTMLElement>("#question-mode-selector");
+const questionModeInput = must<HTMLSelectElement>("#question-mode");
 const practice = must<HTMLElement>("#practice");
 const racePanel = must<HTMLElement>("#race-panel");
 const raceSetup = must<HTMLElement>("#race-setup");
+const raceModeHint = must<HTMLElement>("#race-mode-hint");
 const startRace = must<HTMLButtonElement>("#start-race");
 const raceStatus = must<HTMLElement>("#race-status");
 const raceTimer = must<HTMLElement>("#race-timer");
@@ -96,7 +100,8 @@ interface RaceMistake {
 }
 
 const initialRange = loadRange();
-const initialQuestion = pickQuestion(initialRange.from, initialRange.to, null);
+let questionMode: QuestionMode = "both";
+const initialQuestion = pickQuestion(initialRange.from, initialRange.to, null, undefined, questionMode);
 let suitPositionRank = pickSuitPositionRank(null);
 let suitPositionAnswers: string[] = Array(SUIT_POSITION_ORDER.length).fill("");
 let suitPositionsSubmitted = false;
@@ -267,6 +272,12 @@ function buildStack(): void {
 }
 
 function bindEvents(): void {
+  questionModeInput.addEventListener("change", () => {
+    const mode = questionModeInput.value;
+    if (!isQuestionMode(mode)) throw new Error(`Unknown question mode: ${mode}`);
+    setQuestionMode(mode);
+  });
+
   fromDec.addEventListener("click", () => {
     if (state.from > 1) updateRange({ from: state.from - 1, to: state.to });
   });
@@ -336,7 +347,7 @@ function updateRange(range: Range): void {
   const position = state.question.position;
   if (state.phase === "answering" && (position < next.from || position > next.to)) {
     clearTimer();
-    state.question = pickQuestion(next.from, next.to, position);
+    state.question = pickQuestion(next.from, next.to, position, undefined, questionMode);
     state.practiceQuestion = state.question;
     clearAnswer();
     renderQuestion();
@@ -368,6 +379,8 @@ function setView(view: View): void {
 function renderView(): void {
   const raceActive = isRaceActive();
   rangeSelector.hidden = raceActive || state.view === "suit-positions";
+  questionModeSelector.hidden = state.view !== "practice" && state.view !== "race";
+  questionModeInput.disabled = raceActive;
   practice.hidden = state.view !== "practice" && !(state.view === "race" && raceActive);
   racePanel.hidden = state.view !== "race";
   stackView.hidden = state.view !== "stack";
@@ -376,6 +389,40 @@ function renderView(): void {
   tabRace.setAttribute("aria-selected", String(state.view === "race"));
   tabStack.setAttribute("aria-selected", String(state.view === "stack"));
   tabSuitPositions.setAttribute("aria-selected", String(state.view === "suit-positions"));
+  renderQuestionMode();
+}
+
+function isQuestionMode(value: string): value is QuestionMode {
+  return value === "cards" || value === "positions" || value === "both";
+}
+
+function setQuestionMode(mode: QuestionMode): void {
+  questionMode = mode;
+  const questionAllowed =
+    mode === "both" ||
+    (mode === "cards" && state.question.askFor === "card") ||
+    (mode === "positions" && state.question.askFor === "position");
+  if (
+    !isRaceActive() &&
+    state.phase === "answering" &&
+    !questionAllowed
+  ) {
+    state.question = pickQuestion(state.from, state.to, state.question.position, undefined, mode);
+    state.practiceQuestion = state.question;
+    clearAnswer();
+    renderQuestion();
+  }
+  renderQuestionMode();
+}
+
+function renderQuestionMode(): void {
+  questionModeInput.value = questionMode;
+  const descriptions: Record<QuestionMode, string> = {
+    cards: "Responde una vez por cada posición del rango: identifica la carta en esa posición.",
+    positions: "Responde una vez por cada carta del rango: indica su posición.",
+    both: "Responde una vez por cada carta y una vez por cada posición del rango, en orden aleatorio.",
+  };
+  raceModeHint.textContent = `${descriptions[questionMode]} No verás si has acertado hasta el final.`;
 }
 
 function isRaceActive(): boolean {
@@ -386,7 +433,7 @@ function startRaceSession(): void {
   clearTimer();
   clearRaceTimer();
   if (state.view === "practice") state.practiceQuestion = state.question;
-  state.raceQuestions = buildRaceQuestions(state.from, state.to);
+  state.raceQuestions = buildRaceQuestions(state.from, state.to, undefined, questionMode);
   state.raceIndex = 0;
   state.raceCorrect = 0;
   state.raceMistakes = [];
@@ -698,7 +745,7 @@ function advance(): void {
   clearTimer();
   state.phase = "answering";
   state.result = null;
-  state.question = pickQuestion(state.from, state.to, state.question.position);
+  state.question = pickQuestion(state.from, state.to, state.question.position, undefined, questionMode);
   state.practiceQuestion = state.question;
   clearAnswer();
   render();
