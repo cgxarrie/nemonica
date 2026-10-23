@@ -1017,15 +1017,15 @@ function renderQuestion(): void {
   const raceActive = isRaceActive();
   const result = state.result;
   const showAnswerOutcome = result != null && !raceActive;
-  const showAnswerControls = answering || showAnswerOutcome;
+  const showAnswerControls = answering || result?.right === true;
   practice.classList.remove("wrong-feedback");
   prompt.replaceChildren();
 
   if (question.askFor === "position") {
-    ask.textContent = showAnswerControls ? "¿Qué posición?" : "";
+    ask.textContent = answering || showAnswerOutcome ? "¿Qué posición?" : "";
     practice.setAttribute("aria-label", `${cardSpoken(question.card)}. ¿Qué posición?`);
   } else {
-    ask.textContent = showAnswerControls ? "¿Qué carta?" : "";
+    ask.textContent = answering || showAnswerOutcome ? "¿Qué carta?" : "";
     practice.setAttribute("aria-label", `Posición ${question.position}. ¿Qué carta?`);
   }
 
@@ -1035,7 +1035,6 @@ function renderQuestion(): void {
   positionPreview.hidden = positionEntry.hidden || showAnswerOutcome;
   cardPreview.hidden = cardEntry.hidden || showAnswerOutcome;
   correctAnswerDisplay.hidden = !showAnswerOutcome;
-  feedback.hidden = result?.right === false;
   feedbackBlock.hidden = answering || raceActive || result?.right === true;
   if (showAnswerOutcome && result) renderCorrectAnswer(question, result);
 
@@ -1111,7 +1110,6 @@ function feedbackMark(right: boolean): HTMLElement {
 
 function renderCorrectAnswer(question: Question, result: Result): void {
   correctAnswerDisplay.replaceChildren();
-  correctAnswerDisplay.classList.toggle("incorrect", !result.right);
   correctAnswerDisplay.setAttribute(
     "aria-label",
     question.askFor === "position"
@@ -1124,26 +1122,7 @@ function renderCorrectAnswer(question: Question, result: Result): void {
 
   if (result.right) {
     correctAnswerDisplay.append(feedbackMark(true));
-    return;
   }
-
-  const answer = document.createElement("div");
-  answer.className = "answer-feedback-user";
-  answer.setAttribute("aria-label", "Respuesta incorrecta");
-  const mark = document.createElement("span");
-  mark.className = "answer-feedback-wrong-mark";
-  mark.setAttribute("role", "img");
-  mark.setAttribute("aria-label", "Respuesta incorrecta");
-  mark.textContent = "✓";
-  const text = document.createElement("span");
-  const answerText = result.positionAnswer != null
-    ? String(result.positionAnswer)
-    : result.cardAnswer
-      ? cardLabel(result.cardAnswer)
-      : "";
-  text.textContent = `Tu respuesta: ${answerText}`;
-  answer.append(mark, text);
-  correctAnswerDisplay.append(answer);
 }
 
 function playingCard(card: Card): HTMLElement {
@@ -1206,16 +1185,35 @@ function renderSelection(): void {
 function renderFeedback(result: Result): void {
   const question = state.question;
   feedback.replaceChildren();
-  feedback.className = `feedback ${result.right ? "good" : "bad"}`;
+  if (!result.right) {
+    feedback.className = "feedback answer-review";
+    const answer = document.createElement("span");
+    answer.className = "answer-feedback-user";
+    const mark = document.createElement("span");
+    mark.className = "answer-feedback-wrong-mark";
+    mark.setAttribute("role", "img");
+    mark.setAttribute("aria-label", "Respuesta incorrecta");
+    mark.textContent = "✓";
+    const answerText = result.positionAnswer != null
+      ? String(result.positionAnswer)
+      : result.cardAnswer
+        ? cardLabel(result.cardAnswer)
+        : "";
+    const text = document.createElement("span");
+    text.textContent = `Tu respuesta: ${answerText}`;
+    answer.append(mark, text);
+    feedback.append(answer);
+    return;
+  }
+
+  feedback.className = "feedback good";
 
   const title = document.createElement("span");
   title.className = "feedback-title";
-  title.textContent = result.right ? "Correcto" : "Incorrecto";
+  title.textContent = "Correcto";
   feedback.append(title);
 
-  if (!result.right) {
-    feedback.append(correctAnswerPair(question));
-  } else if (question.askFor === "position") {
+  if (question.askFor === "position") {
     const detail = document.createElement("span");
     detail.append(cardSpan(question.card), ` es la posición ${question.position}.`);
     feedback.append(detail);
@@ -1224,53 +1222,6 @@ function renderFeedback(result: Result): void {
     detail.append(`La posición ${question.position} es `, cardSpan(question.card), ".");
     feedback.append(detail);
   }
-
-  if (!result.right) {
-    const yours = document.createElement("span");
-    yours.className = "you-said";
-    if (result.positionAnswer != null) {
-      yours.textContent = `Has dicho ${result.positionAnswer}.`;
-    } else if (result.cardAnswer) {
-      yours.append("Has dicho ", cardSpan(result.cardAnswer), ".");
-    }
-    feedback.append(yours);
-
-    const continueHint = document.createElement("span");
-    continueHint.className = "you-said";
-    continueHint.textContent = "Pulsa Siguiente para continuar.";
-    feedback.append(continueHint);
-  }
-}
-
-function correctAnswerPair(question: Question): HTMLElement {
-  const pair = document.createElement("div");
-  pair.className = "correct-answer-pair";
-  pair.setAttribute("role", "group");
-  pair.setAttribute(
-    "aria-label",
-    `Respuesta correcta: posición ${question.position}, ${cardSpoken(question.card)}.`,
-  );
-
-  const position = document.createElement("div");
-  position.className = "correct-answer-item";
-  const positionLabel = document.createElement("span");
-  positionLabel.className = "correct-answer-label";
-  positionLabel.textContent = "Posición";
-  const positionVisual = positionCard(question.position);
-  positionVisual.classList.add("correct-answer-visual");
-  position.append(positionLabel, positionVisual);
-
-  const card = document.createElement("div");
-  card.className = "correct-answer-item";
-  const cardLabel = document.createElement("span");
-  cardLabel.className = "correct-answer-label";
-  cardLabel.textContent = "Carta";
-  const cardVisual = playingCard(question.card);
-  cardVisual.classList.add("correct-answer-visual");
-  card.append(cardLabel, cardVisual);
-
-  pair.append(position, card);
-  return pair;
 }
 
 function cardSpan(card: Card): HTMLElement {

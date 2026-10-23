@@ -686,14 +686,6 @@ h1 {
   height: 124px;
 }
 
-.correct-answer-preview.incorrect {
-  display: flex;
-  height: auto;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
 .correct-answer-preview .position-mark {
   font-size: 3.5rem;
 }
@@ -898,45 +890,10 @@ h1 {
   animation: shake 0.35s ease;
 }
 
-.correct-answer-pair {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin: 12px 0;
-}
-
-.correct-answer-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.correct-answer-label {
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
-.correct-answer-visual {
-  width: 88px;
-  height: 124px;
-  border-radius: 10px;
-}
-
-.correct-answer-visual.position-card .position-mark {
-  font-size: 3.5rem;
-}
-
-.correct-answer-visual.position-card .kicker {
-  font-size: 0.58rem;
-}
-
-.correct-answer-visual.playing-card .corner {
-  font-size: 0.9rem;
-}
-
-.correct-answer-visual.playing-card .pip {
-  font-size: 3rem;
+.feedback.answer-review {
+  padding: 6px 8px;
+  background: transparent;
+  text-align: left;
 }
 
 .feedback-title {
