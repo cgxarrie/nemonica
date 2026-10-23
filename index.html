@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0e2c22" />
     <meta
       name="description"
-      content="Practica la baraja Mnemónica. Di la posición de una carta, o la carta de una posición, dentro del rango que elijas."
+      content="Practica la baraja Mnemónica. Di la posición de una carta, identifica cartas por su posición o encuentra las posiciones de un valor en cada palo."
     />
     <title>Mnemónica</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -19,10 +19,34 @@
           <p class="eyebrow">Baraja Tamariz</p>
           <h1>Mnemónica</h1>
         </div>
-        <div class="score">
-          <p class="score-value" id="score-value">0/0</p>
-          <p class="score-meta" id="score-meta">Listo</p>
-          <button type="button" id="reset-score" class="text-btn" hidden>Reiniciar</button>
+        <div class="top-controls">
+          <div id="question-mode-selector" class="question-mode-selector" role="group" aria-label="Tipos de pregunta">
+            <button
+              type="button"
+              class="question-mode-toggle"
+              data-question-mode="cards"
+              aria-label="Preguntar el nombre de la carta"
+              aria-pressed="true"
+            >
+              <span class="question-mode-icon card-icon" aria-hidden="true"><span>A</span><span>♠</span></span>
+              <span>Nombre</span>
+            </button>
+            <button
+              type="button"
+              class="question-mode-toggle"
+              data-question-mode="positions"
+              aria-label="Preguntar la posición"
+              aria-pressed="true"
+            >
+              <span class="question-mode-icon position-icon" aria-hidden="true">12</span>
+              <span>Posición</span>
+            </button>
+          </div>
+          <div class="score">
+            <p class="score-value" id="score-value">0/0</p>
+            <p class="score-meta" id="score-meta">Listo</p>
+            <button type="button" id="reset-score" class="text-btn" hidden>Reiniciar</button>
+          </div>
         </div>
       </header>
 
@@ -95,20 +119,26 @@
         <button type="button" role="tab" id="tab-stack" aria-selected="false" aria-controls="stack-view">
           Mazo
         </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-suit-positions"
+          aria-selected="false"
+          aria-controls="suit-positions-view"
+        >
+          Valor
+        </button>
       </div>
-
       <section id="race-panel" role="tabpanel" aria-labelledby="tab-race" hidden>
         <div id="race-setup" class="race-panel">
           <p class="race-title">Carrera</p>
-          <p class="hint">
-            Responde una vez por cada carta y una vez por cada posición del rango, en orden aleatorio.
-            No verás si has acertado hasta el final.
-          </p>
+          <p class="hint">No verás si has acertado hasta el final.</p>
           <button type="button" id="start-race" class="check">Empezar carrera</button>
         </div>
         <div id="race-status" class="race-status" hidden>
           <p class="race-timer" id="race-timer" aria-live="off">00:00</p>
           <p class="race-progress" id="race-progress"></p>
+          <button type="button" id="exit-race" class="text-btn">Salir</button>
         </div>
         <div id="race-results" class="race-panel" hidden>
           <p class="race-title">Carrera terminada</p>
@@ -159,6 +189,18 @@
       <section id="stack-view" role="tabpanel" aria-labelledby="tab-stack" hidden>
         <p class="hint" id="stack-note"></p>
         <ol class="stack-grid" id="stack-grid"></ol>
+      </section>
+
+      <section id="suit-positions-view" role="tabpanel" aria-labelledby="tab-suit-positions" hidden>
+        <div class="suit-positions-panel">
+          <p class="race-title">Valor</p>
+          <p class="hint">Indica la posición de cada carta con este valor. Responde en el orden de los palos.</p>
+          <p class="suit-positions-prompt">Valor: <strong id="suit-positions-rank"></strong></p>
+          <div id="suit-position-inputs" class="suit-position-inputs"></div>
+          <button type="button" id="check-suit-positions" class="check">Comprobar</button>
+          <p id="suit-positions-feedback" class="suit-positions-feedback" role="status" hidden></p>
+          <button type="button" id="next-suit-positions" class="next" hidden>Siguiente valor</button>
+        </div>
       </section>
     </div>
     <noscript>Mnemónica necesita JavaScript para funcionar.</noscript>

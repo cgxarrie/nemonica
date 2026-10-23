@@ -7,8 +7,13 @@ import {
   isRightPosition,
   normalizeRange,
   pickQuestion,
+  pickSuitPositionRank,
+  positionsForRank,
+  toggleQuestionMode,
+  type QuestionMode,
+  SUIT_POSITION_ORDER,
 } from "./quiz.ts";
-import { STACK, cardCode } from "./stack.ts";
+import { STACK, cardCode, type Rank } from "./stack.ts";
 
 test("stack is the Mnemónica order", () => {
   assert.equal(STACK.length, 52);
@@ -75,6 +80,15 @@ test("random questions never leave the requested range", () => {
   }
 });
 
+test("practice question mode selects the requested question direction", () => {
+  const cards = pickQuestion(1, 10, null, () => 0, "cards");
+  const positions = pickQuestion(1, 10, null, () => 0, "positions");
+  const both = pickQuestion(1, 10, null, () => 0, "both");
+  assert.equal(cards.askFor, "card");
+  assert.equal(positions.askFor, "position");
+  assert.equal(both.askFor, "position");
+});
+
 test("race questions ask each position and card once in a shuffled order", () => {
   const questions = buildRaceQuestions(3, 7);
   assert.equal(questions.length, 10);
@@ -94,10 +108,53 @@ test("race questions ask each position and card once in a shuffled order", () =>
   }
 });
 
+test("race questions include only the selected question direction", () => {
+  const expected: Record<"cards" | "positions", "card" | "position"> = {
+    cards: "card",
+    positions: "position",
+  };
+  for (const mode of ["cards", "positions"] as const) {
+    const questions = buildRaceQuestions(3, 7, () => 0, mode);
+    assert.equal(questions.length, 5);
+    assert.ok(questions.every((question) => question.askFor === expected[mode]));
+  }
+
+  assert.equal(buildRaceQuestions(3, 7, () => 0, "both").length, 10);
+});
+
+test("question type toggles always leave at least one type active", () => {
+  assert.equal(toggleQuestionMode("both", "cards"), "positions");
+  assert.equal(toggleQuestionMode("both", "positions"), "cards");
+  assert.equal(toggleQuestionMode("cards", "cards"), "positions");
+  assert.equal(toggleQuestionMode("positions", "positions"), "cards");
+  assert.equal(toggleQuestionMode("cards", "positions"), "both");
+  assert.equal(toggleQuestionMode("positions", "cards"), "both");
+});
+
 test("race question order can be controlled for deterministic tests", () => {
   const questions = buildRaceQuestions(1, 2, () => 0);
   assert.deepEqual(
     questions.map(({ position, askFor }) => `${position}-${askFor}`),
     ["1-card", "2-position", "2-card", "1-position"],
   );
+});
+
+test("suit positions are returned in Clubs, Hearts, Spades, Diamonds order", () => {
+  assert.deepEqual(SUIT_POSITION_ORDER, ["c", "h", "s", "d"]);
+  const positions = positionsForRank("A");
+  assert.deepEqual(
+    positions.map(({ suit }) => suit),
+    ["c", "h", "s", "d"],
+  );
+  for (const { suit, position } of positions) {
+    assert.equal(STACK[position - 1].rank, "A");
+    assert.equal(STACK[position - 1].suit, suit);
+  }
+});
+
+test("suit-position rank selection avoids repeating the previous rank", () => {
+  for (const rank of ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"] as Rank[]) {
+    const next = pickSuitPositionRank(rank, () => 0);
+    assert.notEqual(next, rank);
+  }
 });
