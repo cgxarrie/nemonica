@@ -686,6 +686,10 @@ h1 {
   height: 124px;
 }
 
+.correct-answer-preview .position-mark {
+  font-size: 3.5rem;
+}
+
 .correct-answer-preview .feedback-mark {
   width: 34px;
   height: 34px;
