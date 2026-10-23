@@ -14,19 +14,31 @@ import {
   isRightCard,
   isRightPosition,
   buildRaceQuestions,
+  buildRaceQuestionsFromPositions,
   normalizeRange,
   pickQuestion,
+  pickQuestionFromPositions,
   pickSuitPositionRank,
   positionsForRank,
+  normalizeCardPerformanceRecord,
+  priorityPositions,
+  recordCardAnswer,
   toggleQuestionMode,
   SUIT_POSITION_ORDER,
+  type CardPerformanceRecord,
   type Question,
   type QuestionMode,
   type Range,
 } from "./quiz.ts";
 
 const STORAGE_KEY = "mnemónica-range";
+const CARD_PERFORMANCE_KEY = "mnemónica-card-performance";
 const AUTO_ADVANCE_MS = 1200;
+const FOCUS_CARDS_PER_CRITERION = 10;
+const responseTimeFormatter = new Intl.NumberFormat("es-ES", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
 const scoreValue = must<HTMLElement>("#score-value");
 const scoreMeta = must<HTMLElement>("#score-meta");
@@ -44,8 +56,17 @@ const tabPractice = must<HTMLButtonElement>("#tab-practice");
 const tabRace = must<HTMLButtonElement>("#tab-race");
 const tabStack = must<HTMLButtonElement>("#tab-stack");
 const tabSuitPositions = must<HTMLButtonElement>("#tab-suit-positions");
+const tabFocus = must<HTMLButtonElement>("#tab-focus");
 const questionModeSelector = must<HTMLElement>("#question-mode-selector");
 const practice = must<HTMLElement>("#practice");
+const focusPanel = must<HTMLElement>("#focus-panel");
+const focusCardCount = must<HTMLElement>("#focus-card-count");
+const focusCardList = must<HTMLOListElement>("#focus-card-list");
+const focusPracticeStart = must<HTMLButtonElement>("#focus-practice-start");
+const focusRaceStart = must<HTMLButtonElement>("#focus-race-start");
+const focusSetup = must<HTMLElement>("#focus-setup");
+const focusSessionControls = must<HTMLElement>("#focus-session-controls");
+const exitFocus = must<HTMLButtonElement>("#exit-focus");
 const racePanel = must<HTMLElement>("#race-panel");
 const raceSetup = must<HTMLElement>("#race-setup");
 const startRace = must<HTMLButtonElement>("#start-race");
@@ -74,6 +95,7 @@ const positionPreview = must<HTMLElement>("#position-preview");
 const positionOk = must<HTMLButtonElement>("#position-ok");
 const keypad = must<HTMLElement>("#keypad");
 const cardPreview = must<HTMLElement>("#card-preview");
+const correctAnswerDisplay = must<HTMLElement>("#correct-answer-display");
 const ranksEl = must<HTMLElement>("#ranks");
 const suitsEl = must<HTMLElement>("#suits");
 const checkCard = must<HTMLButtonElement>("#check-card");
@@ -84,7 +106,7 @@ const stackGrid = must<HTMLElement>("#stack-grid");
 const stackNote = must<HTMLElement>("#stack-note");
 
 type Phase = "answering" | "feedback";
-type View = "practice" | "race" | "stack" | "suit-positions";
+type View = "practice" | "race" | "stack" | "suit-positions" | "focus";
 type RaceStatus = "idle" | "active" | "finished";
 
 interface Result {
@@ -100,6 +122,7 @@ interface RaceMistake {
 }
 
 const initialRange = loadRange();
+let cardPerformance = loadCardPerformance();
 let questionMode: QuestionMode = "both";
 const initialQuestion = pickQuestion(initialRange.from, initialRange.to, null, undefined, questionMode);
 let suitPositionRank = pickSuitPositionRank(null);
@@ -111,8 +134,11 @@ const state: {
   to: number;
   question: Question;
   practiceQuestion: Question;
+  questionStartedAt: number | null;
   phase: Phase;
   view: View;
+  focusPracticeActive: boolean;
+  practicePositions: number[] | null;
   correct: number;
   attempts: number;
   streak: number;
@@ -124,6 +150,7 @@ const state: {
   timer: number | null;
   raceStatus: RaceStatus;
   raceQuestions: Question[];
+  racePositions: number[] | null;
   raceIndex: number;
   raceCorrect: number;
   raceMistakes: RaceMistake[];
@@ -136,8 +163,11 @@ const state: {
   to: initialRange.to,
   question: initialQuestion,
   practiceQuestion: initialQuestion,
+  questionStartedAt: null,
   phase: "answering",
   view: "practice",
+  focusPracticeActive: false,
+  practicePositions: null,
   correct: 0,
   attempts: 0,
   streak: 0,
@@ -149,6 +179,7 @@ const state: {
   timer: null,
   raceStatus: "idle",
   raceQuestions: [],
+  racePositions: null,
   raceIndex: 0,
   raceCorrect: 0,
   raceMistakes: [],
@@ -179,6 +210,24 @@ function loadRange(): Range {
     return normalizeRange(Number(parsed.from), Number(parsed.to));
   } catch {
     return { from: 1, to: 52 };
+  }
+}
+
+function loadCardPerformance(): CardPerformanceRecord {
+  try {
+    const raw = localStorage.getItem(CARD_PERFORMANCE_KEY);
+    return raw ? normalizeCardPerformanceRecord(JSON.parse(raw) as unknown) : {};
+  } catch (error) {
+    console.error("Could not load saved card performance.", error);
+    return {};
+  }
+}
+
+function persistCardPerformance(): void {
+  try {
+    localStorage.setItem(CARD_PERFORMANCE_KEY, JSON.stringify(cardPerformance));
+  } catch (error) {
+    console.error("Could not save card performance.", error);
   }
 }
 
@@ -314,9 +363,15 @@ function bindEvents(): void {
   tabRace.addEventListener("click", () => setView("race"));
   tabStack.addEventListener("click", () => setView("stack"));
   tabSuitPositions.addEventListener("click", () => setView("suit-positions"));
-  startRace.addEventListener("click", startRaceSession);
-  restartRace.addEventListener("click", startRaceSession);
+  tabFocus.addEventListener("click", () => setView("focus"));
+  startRace.addEventListener("click", () => startRaceSession());
+  restartRace.addEventListener("click", () =>
+    startRaceSession(state.racePositions ? currentFocusPositions() : null)
+  );
   exitRace.addEventListener("click", exitRaceSession);
+  focusPracticeStart.addEventListener("click", startFocusedPractice);
+  focusRaceStart.addEventListener("click", startFocusedRace);
+  exitFocus.addEventListener("click", exitFocusedPractice);
   resetScore.addEventListener("click", resetSession);
   keypad.addEventListener("click", onKeypad);
   checkCard.addEventListener("click", submitCard);
@@ -347,6 +402,20 @@ function updateRange(range: Range): void {
   renderStackState();
   if (!changed) return;
 
+  if (state.focusPracticeActive) {
+    clearTimer();
+    state.focusPracticeActive = false;
+    state.practicePositions = null;
+    state.question = pickQuestion(next.from, next.to, null, undefined, questionMode);
+    state.practiceQuestion = state.question;
+    state.questionStartedAt = null;
+    state.phase = "answering";
+    state.result = null;
+    clearAnswer();
+    render();
+    return;
+  }
+
   const position = state.question.position;
   if (
     state.phase === "answering" &&
@@ -355,6 +424,7 @@ function updateRange(range: Range): void {
     clearTimer();
     state.question = pickQuestion(next.from, next.to, position, undefined, questionMode);
     state.practiceQuestion = state.question;
+    state.questionStartedAt = null;
     clearAnswer();
     renderQuestion();
   }
@@ -378,15 +448,39 @@ function syncRangeInputs(force = false): void {
 
 function setView(view: View): void {
   if (isRaceActive() && view !== "race") return;
+  if (
+    view !== state.view &&
+    (state.view === "practice" || (state.view === "focus" && state.focusPracticeActive))
+  ) {
+    state.questionStartedAt = null;
+  }
+  if (state.focusPracticeActive && view !== "focus") {
+    clearTimer();
+    state.focusPracticeActive = false;
+    state.practicePositions = null;
+    state.question = pickQuestion(state.from, state.to, null, undefined, questionMode);
+    state.practiceQuestion = state.question;
+    state.questionStartedAt = null;
+    state.phase = "answering";
+    state.result = null;
+    clearAnswer();
+  }
   state.view = view;
-  renderView();
+  render();
 }
 
 function renderView(): void {
   const raceActive = isRaceActive();
   rangeSelector.hidden = raceActive || state.view === "suit-positions";
-  questionModeSelector.hidden = state.view !== "practice" && state.view !== "race";
-  practice.hidden = state.view !== "practice" && !(state.view === "race" && raceActive);
+  questionModeSelector.hidden =
+    state.view !== "practice" && state.view !== "focus" && state.view !== "race";
+  practice.hidden =
+    state.view !== "practice" &&
+    !(state.view === "focus" && state.focusPracticeActive) &&
+    !(state.view === "race" && raceActive);
+  focusPanel.hidden = state.view !== "focus";
+  focusSetup.hidden = state.focusPracticeActive;
+  focusSessionControls.hidden = !state.focusPracticeActive;
   racePanel.hidden = state.view !== "race";
   stackView.hidden = state.view !== "stack";
   suitPositionsView.hidden = state.view !== "suit-positions";
@@ -394,6 +488,7 @@ function renderView(): void {
   tabRace.setAttribute("aria-selected", String(state.view === "race"));
   tabStack.setAttribute("aria-selected", String(state.view === "stack"));
   tabSuitPositions.setAttribute("aria-selected", String(state.view === "suit-positions"));
+  tabFocus.setAttribute("aria-selected", String(state.view === "focus"));
   renderQuestionMode();
 }
 
@@ -403,7 +498,7 @@ function handleQuestionModeToggle(mode: "cards" | "positions"): void {
   questionMode = nextMode;
 
   if (isRaceActive()) {
-    startRaceSession();
+    startRaceSession(state.racePositions);
     return;
   }
 
@@ -412,12 +507,19 @@ function handleQuestionModeToggle(mode: "cards" | "positions"): void {
     (nextMode === "cards" && state.question.askFor === "card") ||
     (nextMode === "positions" && state.question.askFor === "position");
   if (
-    !isRaceActive() &&
     state.phase === "answering" &&
     !questionAllowed
   ) {
-    state.question = pickQuestion(state.from, state.to, state.question.position, undefined, nextMode);
+    state.question = state.focusPracticeActive && state.practicePositions
+      ? pickQuestionFromPositions(
+          state.practicePositions,
+          state.question.position,
+          undefined,
+          nextMode,
+        )
+      : pickQuestion(state.from, state.to, state.question.position, undefined, nextMode);
     state.practiceQuestion = state.question;
+    state.questionStartedAt = null;
     clearAnswer();
   }
   render();
@@ -437,11 +539,54 @@ function isRaceActive(): boolean {
   return state.raceStatus === "active";
 }
 
-function startRaceSession(): void {
+function currentFocusPositions(): number[] {
+  return priorityPositions(cardPerformance, state.from, state.to, FOCUS_CARDS_PER_CRITERION);
+}
+
+function startFocusedPractice(): void {
+  const positions = currentFocusPositions();
+  if (positions.length === 0) return;
+  clearTimer();
+  state.practicePositions = positions;
+  state.focusPracticeActive = true;
+  state.view = "focus";
+  state.phase = "answering";
+  state.result = null;
+  state.question = pickQuestionFromPositions(positions, null, undefined, questionMode);
+  state.practiceQuestion = state.question;
+  state.questionStartedAt = null;
+  clearAnswer();
+  render();
+}
+
+function startFocusedRace(): void {
+  const positions = currentFocusPositions();
+  if (positions.length === 0) return;
+  startRaceSession(positions);
+}
+
+function exitFocusedPractice(): void {
+  if (!state.focusPracticeActive) return;
+  clearTimer();
+  state.focusPracticeActive = false;
+  state.practicePositions = null;
+  state.question = pickQuestion(state.from, state.to, null, undefined, questionMode);
+  state.practiceQuestion = state.question;
+  state.questionStartedAt = null;
+  state.phase = "answering";
+  state.result = null;
+  clearAnswer();
+  render();
+}
+
+function startRaceSession(positions: number[] | null = null): void {
   clearTimer();
   clearRaceTimer();
   if (state.view === "practice") state.practiceQuestion = state.question;
-  state.raceQuestions = buildRaceQuestions(state.from, state.to, undefined, questionMode);
+  state.racePositions = positions;
+  state.raceQuestions = positions
+    ? buildRaceQuestionsFromPositions(positions, undefined, questionMode)
+    : buildRaceQuestions(state.from, state.to, undefined, questionMode);
   state.raceIndex = 0;
   state.raceCorrect = 0;
   state.raceMistakes = [];
@@ -452,6 +597,7 @@ function startRaceSession(): void {
   state.phase = "answering";
   state.result = null;
   state.question = state.raceQuestions[0];
+  state.questionStartedAt = null;
   clearAnswer();
   state.raceTimer = window.setInterval(updateRaceTimer, 100);
   render();
@@ -459,12 +605,17 @@ function startRaceSession(): void {
 
 function exitRaceSession(): void {
   if (!isRaceActive()) return;
+  const returnToFocus = state.racePositions != null;
   clearRaceTimer();
   state.raceStatus = "idle";
   state.raceStartedAt = null;
   state.raceElapsedMs = 0;
-  state.view = "practice";
+  state.racePositions = null;
+  state.view = returnToFocus ? "focus" : "practice";
+  state.focusPracticeActive = false;
+  state.practicePositions = null;
   state.question = state.practiceQuestion;
+  state.questionStartedAt = null;
   state.phase = "answering";
   state.result = null;
   clearAnswer();
@@ -477,6 +628,7 @@ function recordRaceAnswer(
   cardAnswer: Card | null,
 ): void {
   if (!isRaceActive()) return;
+  recordCurrentCardAnswer(right);
   if (right) {
     state.raceCorrect += 1;
   } else {
@@ -495,6 +647,7 @@ function recordRaceAnswer(
   }
 
   state.question = state.raceQuestions[state.raceIndex];
+  state.questionStartedAt = null;
   render();
 }
 
@@ -503,6 +656,7 @@ function finishRace(): void {
   state.raceElapsedMs = performance.now() - (state.raceStartedAt ?? performance.now());
   state.raceStatus = "finished";
   state.question = state.practiceQuestion;
+  state.questionStartedAt = null;
   state.phase = "answering";
   state.result = null;
   clearAnswer();
@@ -732,6 +886,7 @@ function submitCard(): void {
 
 function settle(right: boolean, positionAnswer: number | null, cardAnswer: Card | null): void {
   clearTimer();
+  recordCurrentCardAnswer(right);
   state.phase = "feedback";
   state.attempts += 1;
   if (right) {
@@ -767,7 +922,15 @@ function advance(): void {
   clearTimer();
   state.phase = "answering";
   state.result = null;
-  state.question = pickQuestion(state.from, state.to, state.question.position, undefined, questionMode);
+  state.question = state.focusPracticeActive && state.practicePositions
+    ? pickQuestionFromPositions(
+        state.practicePositions,
+        state.question.position,
+        undefined,
+        questionMode,
+      )
+    : pickQuestion(state.from, state.to, state.question.position, undefined, questionMode);
+  state.questionStartedAt = null;
   state.practiceQuestion = state.question;
   clearAnswer();
   render();
@@ -787,8 +950,40 @@ function render(): void {
   renderView();
   renderRace();
   renderQuestion();
+  renderFocus();
   renderStackState();
   renderSuitPositions();
+}
+
+function recordCurrentCardAnswer(right: boolean): void {
+  const elapsedMs = Math.max(
+    0,
+    performance.now() - (state.questionStartedAt ?? performance.now()),
+  );
+  cardPerformance = recordCardAnswer(cardPerformance, state.question.position, right, elapsedMs);
+  persistCardPerformance();
+}
+
+function renderFocus(): void {
+  const positions = currentFocusPositions();
+  focusCardCount.textContent = positions.length > 0
+    ? `${positions.length} cartas prioritarias en el rango ${state.from}–${state.to}.`
+    : "Aún no hay cartas prioritarias en este rango. Practica para generar estadísticas.";
+  focusPracticeStart.disabled = positions.length === 0;
+  focusRaceStart.disabled = positions.length === 0;
+  focusCardList.replaceChildren();
+  for (const position of positions) {
+    const stats = cardPerformance[position];
+    if (!stats) throw new Error(`Missing statistics for focus position ${position}.`);
+    const item = document.createElement("li");
+    const averageSeconds = stats.correctAnswers > 0
+      ? responseTimeFormatter.format(stats.correctTimeMs / stats.correctAnswers / 1000)
+      : "—";
+    item.textContent =
+      `${cardLabel(STACK[position - 1])} · ${stats.misses} fallos · ` +
+      `${stats.correctAnswers} aciertos · media ${averageSeconds} s`;
+    focusCardList.append(item);
+  }
 }
 
 function renderScore(): void {
@@ -810,25 +1005,38 @@ function renderPresets(): void {
 }
 
 function renderQuestion(): void {
+  const questionVisible =
+    state.view === "practice" ||
+    (state.view === "focus" && state.focusPracticeActive) ||
+    (state.view === "race" && isRaceActive());
+  if (questionVisible && state.questionStartedAt == null) {
+    state.questionStartedAt = performance.now();
+  }
   const question = state.question;
   const answering = state.phase === "answering";
   const raceActive = isRaceActive();
   const result = state.result;
-  practice.classList.toggle("wrong-feedback", result != null && !result.right);
+  const showAnswerOutcome = result != null && !raceActive;
+  const showAnswerControls = answering || result?.right === true;
+  practice.classList.toggle("incorrect-feedback", result?.right === false && !raceActive);
   prompt.replaceChildren();
 
   if (question.askFor === "position") {
-    ask.textContent = answering ? "¿Qué posición?" : "";
+    ask.textContent = answering || showAnswerOutcome ? "¿Qué posición?" : "";
     practice.setAttribute("aria-label", `${cardSpoken(question.card)}. ¿Qué posición?`);
   } else {
-    ask.textContent = answering ? "¿Qué carta?" : "";
+    ask.textContent = answering || showAnswerOutcome ? "¿Qué carta?" : "";
     practice.setAttribute("aria-label", `Posición ${question.position}. ¿Qué carta?`);
   }
 
-  prompt.append(flipCard(question, result));
-  positionEntry.hidden = !(answering && question.askFor === "position");
-  cardEntry.hidden = !(answering && question.askFor === "card");
-  feedbackBlock.hidden = answering || raceActive;
+  prompt.append(flipCard(question, showAnswerOutcome ? null : result));
+  positionEntry.hidden = !(showAnswerControls && question.askFor === "position");
+  cardEntry.hidden = !(showAnswerControls && question.askFor === "card");
+  positionPreview.hidden = positionEntry.hidden || showAnswerOutcome;
+  cardPreview.hidden = cardEntry.hidden || showAnswerOutcome;
+  correctAnswerDisplay.hidden = !showAnswerOutcome;
+  feedbackBlock.hidden = answering || raceActive || result?.right === true;
+  if (showAnswerOutcome && result) renderCorrectAnswer(question, result);
 
   prompt.classList.remove("swap");
   void prompt.offsetWidth;
@@ -900,6 +1108,23 @@ function feedbackMark(right: boolean): HTMLElement {
   return mark;
 }
 
+function renderCorrectAnswer(question: Question, result: Result): void {
+  correctAnswerDisplay.replaceChildren();
+  correctAnswerDisplay.setAttribute(
+    "aria-label",
+    question.askFor === "position"
+      ? `Respuesta correcta: posición ${question.position}.`
+      : `Respuesta correcta: ${cardSpoken(question.card)}.`,
+  );
+  correctAnswerDisplay.append(
+    question.askFor === "position" ? positionCard(question.position) : playingCard(question.card),
+  );
+
+  if (result.right) {
+    correctAnswerDisplay.append(feedbackMark(true));
+  }
+}
+
 function playingCard(card: Card): HTMLElement {
   const face = document.createElement("div");
   face.className = `playing-card ${isRed(card.suit) ? "red" : "black"}`;
@@ -925,19 +1150,24 @@ function renderDraft(): void {
   const empty = state.draft === "";
   positionPreview.textContent = empty ? "—" : state.draft;
   positionPreview.classList.toggle("placeholder", empty);
-  positionOk.disabled = empty;
+  positionOk.disabled = empty || state.phase !== "answering";
+  for (const button of keypad.querySelectorAll("button")) {
+    button.disabled = state.phase !== "answering";
+  }
 }
 
 function renderSelection(): void {
   for (const button of ranksEl.querySelectorAll("button")) {
     button.setAttribute("aria-pressed", String(button.dataset.rank === state.rank));
+    button.disabled = state.phase !== "answering";
   }
   for (const button of suitsEl.querySelectorAll("button")) {
     button.setAttribute("aria-pressed", String(button.dataset.suit === state.suit));
+    button.disabled = state.phase !== "answering";
   }
 
   const ready = state.rank != null && state.suit != null;
-  checkCard.disabled = !ready;
+  checkCard.disabled = !ready || state.phase !== "answering";
   cardPreview.className = "typed";
   if (ready && state.rank && state.suit) {
     cardPreview.classList.add(isRed(state.suit) ? "red" : "black");
@@ -955,16 +1185,35 @@ function renderSelection(): void {
 function renderFeedback(result: Result): void {
   const question = state.question;
   feedback.replaceChildren();
-  feedback.className = `feedback ${result.right ? "good" : "bad"}`;
+  if (!result.right) {
+    feedback.className = "feedback answer-review";
+    const answer = document.createElement("span");
+    answer.className = "answer-feedback-user";
+    const mark = document.createElement("span");
+    mark.className = "answer-feedback-wrong-mark";
+    mark.setAttribute("role", "img");
+    mark.setAttribute("aria-label", "Respuesta incorrecta");
+    mark.textContent = "×";
+    const answerText = result.positionAnswer != null
+      ? String(result.positionAnswer)
+      : result.cardAnswer
+        ? cardLabel(result.cardAnswer)
+        : "";
+    const text = document.createElement("span");
+    text.textContent = `Tu respuesta: ${answerText}`;
+    answer.append(mark, text);
+    feedback.append(answer);
+    return;
+  }
+
+  feedback.className = "feedback good";
 
   const title = document.createElement("span");
   title.className = "feedback-title";
-  title.textContent = result.right ? "Correcto" : "Incorrecto";
+  title.textContent = "Correcto";
   feedback.append(title);
 
-  if (!result.right) {
-    feedback.append(correctAnswerPair(question));
-  } else if (question.askFor === "position") {
+  if (question.askFor === "position") {
     const detail = document.createElement("span");
     detail.append(cardSpan(question.card), ` es la posición ${question.position}.`);
     feedback.append(detail);
@@ -973,53 +1222,6 @@ function renderFeedback(result: Result): void {
     detail.append(`La posición ${question.position} es `, cardSpan(question.card), ".");
     feedback.append(detail);
   }
-
-  if (!result.right) {
-    const yours = document.createElement("span");
-    yours.className = "you-said";
-    if (result.positionAnswer != null) {
-      yours.textContent = `Has dicho ${result.positionAnswer}.`;
-    } else if (result.cardAnswer) {
-      yours.append("Has dicho ", cardSpan(result.cardAnswer), ".");
-    }
-    feedback.append(yours);
-
-    const continueHint = document.createElement("span");
-    continueHint.className = "you-said";
-    continueHint.textContent = "Pulsa Siguiente para continuar.";
-    feedback.append(continueHint);
-  }
-}
-
-function correctAnswerPair(question: Question): HTMLElement {
-  const pair = document.createElement("div");
-  pair.className = "correct-answer-pair";
-  pair.setAttribute("role", "group");
-  pair.setAttribute(
-    "aria-label",
-    `Respuesta correcta: posición ${question.position}, ${cardSpoken(question.card)}.`,
-  );
-
-  const position = document.createElement("div");
-  position.className = "correct-answer-item";
-  const positionLabel = document.createElement("span");
-  positionLabel.className = "correct-answer-label";
-  positionLabel.textContent = "Posición";
-  const positionVisual = positionCard(question.position);
-  positionVisual.classList.add("correct-answer-visual");
-  position.append(positionLabel, positionVisual);
-
-  const card = document.createElement("div");
-  card.className = "correct-answer-item";
-  const cardLabel = document.createElement("span");
-  cardLabel.className = "correct-answer-label";
-  cardLabel.textContent = "Carta";
-  const cardVisual = playingCard(question.card);
-  cardVisual.classList.add("correct-answer-visual");
-  card.append(cardLabel, cardVisual);
-
-  pair.append(position, card);
-  return pair;
 }
 
 function cardSpan(card: Card): HTMLElement {

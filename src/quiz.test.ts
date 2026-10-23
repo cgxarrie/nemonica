@@ -1,14 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildRaceQuestionsFromPositions,
   buildRaceQuestions,
   clampPosition,
+  normalizeCardPerformanceRecord,
   isRightCard,
   isRightPosition,
   normalizeRange,
   pickQuestion,
+  pickQuestionFromPositions,
   pickSuitPositionRank,
   positionsForRank,
+  priorityPositions,
+  recordCardAnswer,
   toggleQuestionMode,
   type QuestionMode,
   SUIT_POSITION_ORDER,
@@ -129,6 +134,71 @@ test("question type toggles always leave at least one type active", () => {
   assert.equal(toggleQuestionMode("positions", "positions"), "cards");
   assert.equal(toggleQuestionMode("cards", "positions"), "both");
   assert.equal(toggleQuestionMode("positions", "cards"), "both");
+});
+
+test("card performance updates misses and correct-answer time without mutating input", () => {
+  const initial = {};
+  const missed = recordCardAnswer(initial, 8, false, 900);
+  const correct = recordCardAnswer(missed, 8, true, 1200);
+  const correctAgain = recordCardAnswer(correct, 8, true, 800);
+
+  assert.deepEqual(initial, {});
+  assert.deepEqual(correctAgain[8], {
+    misses: 1,
+    correctAnswers: 2,
+    correctTimeMs: 2000,
+  });
+});
+
+test("card performance records validate positions and statistic values", () => {
+  assert.deepEqual(
+    normalizeCardPerformanceRecord({
+      "1": { misses: 2, correctAnswers: 3, correctTimeMs: 4000 },
+      "0": { misses: 1, correctAnswers: 1, correctTimeMs: 1000 },
+      "53": { misses: 1, correctAnswers: 1, correctTimeMs: 1000 },
+      "2": { misses: -1, correctAnswers: 1, correctTimeMs: 1000 },
+      "3": { misses: 1, correctAnswers: 1, correctTimeMs: Number.NaN },
+      "4": null,
+    }),
+    { 1: { misses: 2, correctAnswers: 3, correctTimeMs: 4000 } },
+  );
+  assert.deepEqual(normalizeCardPerformanceRecord(null), {});
+  assert.throws(() => recordCardAnswer({}, 53, true, 100));
+});
+
+test("priority cards are the union of the most missed and slowest average correct", () => {
+  const performance = Object.fromEntries(
+    Array.from({ length: 12 }, (_, index) => {
+      const position = index + 1;
+      return [
+        position,
+        {
+          misses: 12 - position,
+          correctAnswers: 1,
+          correctTimeMs: position * 1000,
+        },
+      ];
+    }),
+  );
+
+  assert.deepEqual(priorityPositions(performance), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 11]);
+  assert.deepEqual(priorityPositions(performance, 3, 8, 2), [3, 4, 8, 7]);
+  assert.deepEqual(priorityPositions({}, 1, 52), []);
+});
+
+test("focused questions and races use only the selected positions", () => {
+  const question = pickQuestionFromPositions([4, 9], 4, () => 0, "cards");
+  assert.equal(question.position, 9);
+  assert.equal(question.askFor, "card");
+
+  const singlePositionQuestion = pickQuestionFromPositions([7], 7, () => 0, "positions");
+  assert.equal(singlePositionQuestion.position, 7);
+  assert.equal(singlePositionQuestion.askFor, "position");
+
+  const race = buildRaceQuestionsFromPositions([4, 9], () => 0, "positions");
+  assert.equal(race.length, 2);
+  assert.deepEqual(race.map(({ position }) => position).sort(), [4, 9]);
+  assert.ok(race.every(({ askFor }) => askFor === "position"));
 });
 
 test("race question order can be controlled for deterministic tests", () => {
