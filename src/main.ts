@@ -52,6 +52,7 @@ const startRace = must<HTMLButtonElement>("#start-race");
 const raceStatus = must<HTMLElement>("#race-status");
 const raceTimer = must<HTMLElement>("#race-timer");
 const raceProgress = must<HTMLElement>("#race-progress");
+const exitRace = must<HTMLButtonElement>("#exit-race");
 const raceResults = must<HTMLElement>("#race-results");
 const raceSummary = must<HTMLElement>("#race-summary");
 const mistakesTitle = must<HTMLElement>("#mistakes-title");
@@ -315,6 +316,7 @@ function bindEvents(): void {
   tabSuitPositions.addEventListener("click", () => setView("suit-positions"));
   startRace.addEventListener("click", startRaceSession);
   restartRace.addEventListener("click", startRaceSession);
+  exitRace.addEventListener("click", exitRaceSession);
   resetScore.addEventListener("click", resetSession);
   keypad.addEventListener("click", onKeypad);
   checkCard.addEventListener("click", submitCard);
@@ -384,9 +386,6 @@ function renderView(): void {
   const raceActive = isRaceActive();
   rangeSelector.hidden = raceActive || state.view === "suit-positions";
   questionModeSelector.hidden = state.view !== "practice" && state.view !== "race";
-  for (const button of questionModeSelector.querySelectorAll<HTMLButtonElement>("button")) {
-    button.disabled = raceActive;
-  }
   practice.hidden = state.view !== "practice" && !(state.view === "race" && raceActive);
   racePanel.hidden = state.view !== "race";
   stackView.hidden = state.view !== "stack";
@@ -402,6 +401,11 @@ function handleQuestionModeToggle(mode: "cards" | "positions"): void {
   const nextMode = toggleQuestionMode(questionMode, mode);
   if (nextMode === questionMode) return;
   questionMode = nextMode;
+
+  if (isRaceActive()) {
+    startRaceSession();
+    return;
+  }
 
   const questionAllowed =
     nextMode === "both" ||
@@ -450,6 +454,20 @@ function startRaceSession(): void {
   state.question = state.raceQuestions[0];
   clearAnswer();
   state.raceTimer = window.setInterval(updateRaceTimer, 100);
+  render();
+}
+
+function exitRaceSession(): void {
+  if (!isRaceActive()) return;
+  clearRaceTimer();
+  state.raceStatus = "idle";
+  state.raceStartedAt = null;
+  state.raceElapsedMs = 0;
+  state.view = "practice";
+  state.question = state.practiceQuestion;
+  state.phase = "answering";
+  state.result = null;
+  clearAnswer();
   render();
 }
 
