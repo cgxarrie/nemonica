@@ -555,12 +555,24 @@ h1 {
   grid-column: 1;
   grid-row: 1;
   flex: initial;
+  min-width: 0;
   padding: 0;
+}
+
+#practice.incorrect-feedback .stage #prompt {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+#practice.incorrect-feedback .ask {
+  display: none;
 }
 
 #practice.incorrect-feedback .answer-preview {
   display: flex;
   min-width: 0;
+  min-height: 0;
   grid-column: 2;
   grid-row: 1;
   align-items: center;
@@ -577,6 +589,7 @@ h1 {
 #practice.incorrect-feedback .correct-answer-preview {
   width: min(100%, 132px);
   height: auto;
+  flex: 0 0 auto;
   aspect-ratio: 132 / 184;
 }
 
@@ -919,7 +932,7 @@ h1 {
 }
 
 .feedback.answer-review {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid rgba(255, 113, 104, 0.72);
   background: rgba(122, 30, 33, 0.82);
   color: #fff1ee;
@@ -928,7 +941,7 @@ h1 {
 
 .feedback.answer-review .answer-feedback-user {
   justify-content: flex-start;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
 }
 
 .feedback-title {
