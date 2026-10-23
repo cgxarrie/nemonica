@@ -363,7 +363,7 @@ function bindEvents(): void {
   tabStack.addEventListener("click", () => setView("stack"));
   tabSuitPositions.addEventListener("click", () => setView("suit-positions"));
   tabFocus.addEventListener("click", () => setView("focus"));
-  startRace.addEventListener("click", startRaceSession);
+  startRace.addEventListener("click", () => startRaceSession());
   restartRace.addEventListener("click", () =>
     startRaceSession(state.racePositions ? currentFocusPositions() : null)
   );
