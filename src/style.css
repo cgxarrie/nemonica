@@ -86,6 +86,13 @@ button:active:not(:disabled) {
   gap: 12px;
 }
 
+.top-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 10px;
+}
+
 .eyebrow {
   margin: 0 0 2px;
   font-size: 0.72rem;
@@ -284,22 +291,30 @@ h1 {
 
 .question-mode-selector {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .question-mode-toggle {
   display: flex;
-  min-width: 0;
-  min-height: 56px;
-  flex: 1;
+  width: 40px;
+  min-height: 44px;
+  flex: 0 0 40px;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  padding: 3px;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(0, 0, 0, 0.2);
   color: var(--muted);
-  font-size: 0.88rem;
+}
+
+.question-mode-toggle > span:last-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .question-mode-toggle[aria-pressed="true"] {
@@ -318,9 +333,9 @@ h1 {
 
 .question-mode-icon {
   display: inline-flex;
-  width: 30px;
-  height: 38px;
-  flex: 0 0 30px;
+  width: 26px;
+  height: 34px;
+  flex: 0 0 26px;
   align-items: center;
   justify-content: center;
   border: 1px solid currentColor;

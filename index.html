@@ -19,10 +19,34 @@
           <p class="eyebrow">Baraja Tamariz</p>
           <h1>Mnemónica</h1>
         </div>
-        <div class="score">
-          <p class="score-value" id="score-value">0/0</p>
-          <p class="score-meta" id="score-meta">Listo</p>
-          <button type="button" id="reset-score" class="text-btn" hidden>Reiniciar</button>
+        <div class="top-controls">
+          <div id="question-mode-selector" class="question-mode-selector" role="group" aria-label="Tipos de pregunta">
+            <button
+              type="button"
+              class="question-mode-toggle"
+              data-question-mode="cards"
+              aria-label="Preguntar el nombre de la carta"
+              aria-pressed="true"
+            >
+              <span class="question-mode-icon card-icon" aria-hidden="true"><span>A</span><span>♠</span></span>
+              <span>Nombre</span>
+            </button>
+            <button
+              type="button"
+              class="question-mode-toggle"
+              data-question-mode="positions"
+              aria-label="Preguntar la posición"
+              aria-pressed="true"
+            >
+              <span class="question-mode-icon position-icon" aria-hidden="true">12</span>
+              <span>Posición</span>
+            </button>
+          </div>
+          <div class="score">
+            <p class="score-value" id="score-value">0/0</p>
+            <p class="score-meta" id="score-meta">Listo</p>
+            <button type="button" id="reset-score" class="text-btn" hidden>Reiniciar</button>
+          </div>
         </div>
       </header>
 
@@ -106,28 +130,6 @@
         </button>
       </div>
 
-      <div id="question-mode-selector" class="question-mode-selector" role="group" aria-label="Tipos de pregunta">
-        <button
-          type="button"
-          class="question-mode-toggle"
-          data-question-mode="cards"
-          aria-label="Preguntar el nombre de la carta"
-          aria-pressed="true"
-        >
-          <span class="question-mode-icon card-icon" aria-hidden="true"><span>A</span><span>♠</span></span>
-          <span>Nombre</span>
-        </button>
-        <button
-          type="button"
-          class="question-mode-toggle"
-          data-question-mode="positions"
-          aria-label="Preguntar la posición"
-          aria-pressed="true"
-        >
-          <span class="question-mode-icon position-icon" aria-hidden="true">12</span>
-          <span>Posición</span>
-        </button>
-      </div>
       <p class="hint question-mode-help" id="question-mode-help">
         Activa uno o ambos tipos de pregunta.
       </p>
