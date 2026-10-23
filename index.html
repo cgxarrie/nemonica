@@ -180,9 +180,12 @@
           <div id="prompt"></div>
           <p class="ask" id="ask"></p>
         </div>
+        <div class="answer-preview">
+          <p id="position-preview" class="typed" aria-live="polite">—</p>
+          <p id="card-preview" class="typed placeholder" hidden>Valor y palo</p>
+        </div>
         <div class="answer-block">
           <div id="position-entry" class="entry">
-            <p id="position-preview" class="typed" aria-live="polite">—</p>
             <div class="keypad" id="keypad">
               <button type="button" data-digit="1">1</button>
               <button type="button" data-digit="2">2</button>
@@ -199,7 +202,6 @@
             </div>
           </div>
           <div id="card-entry" class="entry" hidden>
-            <p id="card-preview" class="typed placeholder">Valor y palo</p>
             <div id="ranks" class="ranks" role="group" aria-label="Valor"></div>
             <div id="suits" class="suits" role="group" aria-label="Palo"></div>
             <button type="button" id="check-card" class="check" disabled>Comprobar</button>

@@ -1029,6 +1029,8 @@ function renderQuestion(): void {
   prompt.append(flipCard(question, result));
   positionEntry.hidden = !(answering && question.askFor === "position");
   cardEntry.hidden = !(answering && question.askFor === "card");
+  positionPreview.hidden = positionEntry.hidden;
+  cardPreview.hidden = cardEntry.hidden;
   feedbackBlock.hidden = answering || raceActive;
 
   prompt.classList.remove("swap");

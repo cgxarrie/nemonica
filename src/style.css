@@ -1060,68 +1060,51 @@ h1 {
 
 @media (max-width: 600px) {
   #practice {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    column-gap: 8px;
   }
 
   #practice .stage {
-    flex: 0 0 108px;
+    grid-column: 1;
+    grid-row: 1;
     padding: 0;
   }
 
   #practice .flip-card {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 132 / 184;
+    max-width: 100%;
   }
 
   #practice .ask {
     margin-top: 8px;
     text-align: center;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
+  }
+
+  #practice .answer-preview {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
+  #practice .answer-preview .typed {
+    font-size: 1.6rem;
+  }
+
+  #practice .answer-preview .typed.placeholder {
+    font-size: 0.95rem;
   }
 
   #practice .answer-block {
-    flex: 1;
-    min-width: 0;
+    grid-column: 1 / -1;
+    grid-row: 2;
     padding-top: 0;
-  }
-
-  #practice .typed {
-    margin-bottom: 4px;
-    font-size: 1.8rem;
-  }
-
-  #practice .typed.placeholder {
-    font-size: 0.9rem;
-  }
-
-  #practice .keypad,
-  #practice .ranks,
-  #practice .suits {
-    gap: 5px;
-  }
-
-  #practice .keypad button,
-  #practice .suits button {
-    min-height: 44px;
-  }
-
-  #practice .ranks {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  #practice .ranks button {
-    min-height: 40px;
-    font-size: 0.9rem;
-  }
-
-  #practice .check,
-  #practice .next {
-    min-height: 44px;
-    margin-top: 8px;
-    font-size: 0.95rem;
   }
 }
 
