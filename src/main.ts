@@ -45,11 +45,9 @@ const tabRace = must<HTMLButtonElement>("#tab-race");
 const tabStack = must<HTMLButtonElement>("#tab-stack");
 const tabSuitPositions = must<HTMLButtonElement>("#tab-suit-positions");
 const questionModeSelector = must<HTMLElement>("#question-mode-selector");
-const questionModeHelp = must<HTMLElement>("#question-mode-help");
 const practice = must<HTMLElement>("#practice");
 const racePanel = must<HTMLElement>("#race-panel");
 const raceSetup = must<HTMLElement>("#race-setup");
-const raceModeHint = must<HTMLElement>("#race-mode-hint");
 const startRace = must<HTMLButtonElement>("#start-race");
 const raceStatus = must<HTMLElement>("#race-status");
 const raceTimer = must<HTMLElement>("#race-timer");
@@ -429,14 +427,6 @@ function renderQuestionMode(): void {
       : questionMode === "positions" || questionMode === "both";
     button.setAttribute("aria-pressed", String(active));
   }
-  const descriptions: Record<QuestionMode, string> = {
-    cards: "Se preguntará el nombre de las cartas del rango.",
-    positions: "Se preguntará la posición de las cartas del rango.",
-    both: "Se preguntarán nombres y posiciones de las cartas del rango.",
-  };
-  questionModeHelp.textContent =
-    `${descriptions[questionMode]} Al desactivar el único tipo activo, se activa el otro.`;
-  raceModeHint.textContent = `${descriptions[questionMode]} No verás si has acertado hasta el final.`;
 }
 
 function isRaceActive(): boolean {
