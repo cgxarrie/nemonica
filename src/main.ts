@@ -1016,9 +1016,9 @@ function renderQuestion(): void {
   const answering = state.phase === "answering";
   const raceActive = isRaceActive();
   const result = state.result;
-  const showCorrectAnswer = result?.right === true && !raceActive;
-  const showAnswerControls = answering || showCorrectAnswer;
-  practice.classList.toggle("wrong-feedback", result != null && !result.right);
+  const showAnswerOutcome = result != null && !raceActive;
+  const showAnswerControls = answering || showAnswerOutcome;
+  practice.classList.remove("wrong-feedback");
   prompt.replaceChildren();
 
   if (question.askFor === "position") {
@@ -1029,14 +1029,15 @@ function renderQuestion(): void {
     practice.setAttribute("aria-label", `Posición ${question.position}. ¿Qué carta?`);
   }
 
-  prompt.append(flipCard(question, showCorrectAnswer ? null : result));
+  prompt.append(flipCard(question, showAnswerOutcome ? null : result));
   positionEntry.hidden = !(showAnswerControls && question.askFor === "position");
   cardEntry.hidden = !(showAnswerControls && question.askFor === "card");
-  positionPreview.hidden = positionEntry.hidden || showCorrectAnswer;
-  cardPreview.hidden = cardEntry.hidden || showCorrectAnswer;
-  correctAnswerDisplay.hidden = !showCorrectAnswer;
-  if (showCorrectAnswer) renderCorrectAnswer(question);
-  feedbackBlock.hidden = answering || raceActive || showCorrectAnswer;
+  positionPreview.hidden = positionEntry.hidden || showAnswerOutcome;
+  cardPreview.hidden = cardEntry.hidden || showAnswerOutcome;
+  correctAnswerDisplay.hidden = !showAnswerOutcome;
+  feedback.hidden = result?.right === false;
+  feedbackBlock.hidden = answering || raceActive || result?.right === true;
+  if (showAnswerOutcome && result) renderCorrectAnswer(question, result);
 
   prompt.classList.remove("swap");
   void prompt.offsetWidth;
@@ -1108,8 +1109,9 @@ function feedbackMark(right: boolean): HTMLElement {
   return mark;
 }
 
-function renderCorrectAnswer(question: Question): void {
+function renderCorrectAnswer(question: Question, result: Result): void {
   correctAnswerDisplay.replaceChildren();
+  correctAnswerDisplay.classList.toggle("incorrect", !result.right);
   correctAnswerDisplay.setAttribute(
     "aria-label",
     question.askFor === "position"
@@ -1118,8 +1120,30 @@ function renderCorrectAnswer(question: Question): void {
   );
   correctAnswerDisplay.append(
     question.askFor === "position" ? positionCard(question.position) : playingCard(question.card),
-    feedbackMark(true),
   );
+
+  if (result.right) {
+    correctAnswerDisplay.append(feedbackMark(true));
+    return;
+  }
+
+  const answer = document.createElement("div");
+  answer.className = "answer-feedback-user";
+  answer.setAttribute("aria-label", "Respuesta incorrecta");
+  const mark = document.createElement("span");
+  mark.className = "answer-feedback-wrong-mark";
+  mark.setAttribute("role", "img");
+  mark.setAttribute("aria-label", "Respuesta incorrecta");
+  mark.textContent = "✓";
+  const text = document.createElement("span");
+  const answerText = result.positionAnswer != null
+    ? String(result.positionAnswer)
+    : result.cardAnswer
+      ? cardLabel(result.cardAnswer)
+      : "";
+  text.textContent = `Tu respuesta: ${answerText}`;
+  answer.append(mark, text);
+  correctAnswerDisplay.append(answer);
 }
 
 function playingCard(card: Card): HTMLElement {

@@ -686,6 +686,14 @@ h1 {
   height: 124px;
 }
 
+.correct-answer-preview.incorrect {
+  display: flex;
+  height: auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
 .correct-answer-preview .position-mark {
   font-size: 3.5rem;
 }
@@ -694,6 +702,25 @@ h1 {
   width: 34px;
   height: 34px;
   font-size: 1.35rem;
+}
+
+.answer-feedback-user {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.answer-feedback-wrong-mark {
+  flex: 0 0 auto;
+  color: #ff7168;
+  font-size: 1.15rem;
+  font-weight: 750;
+  line-height: 1;
 }
 
 .corner {
