@@ -1058,6 +1058,73 @@ h1 {
   }
 }
 
+@media (max-width: 600px) {
+  #practice {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #practice .stage {
+    flex: 0 0 108px;
+    padding: 0;
+  }
+
+  #practice .flip-card {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 132 / 184;
+  }
+
+  #practice .ask {
+    margin-top: 8px;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+
+  #practice .answer-block {
+    flex: 1;
+    min-width: 0;
+    padding-top: 0;
+  }
+
+  #practice .typed {
+    margin-bottom: 4px;
+    font-size: 1.8rem;
+  }
+
+  #practice .typed.placeholder {
+    font-size: 0.9rem;
+  }
+
+  #practice .keypad,
+  #practice .ranks,
+  #practice .suits {
+    gap: 5px;
+  }
+
+  #practice .keypad button,
+  #practice .suits button {
+    min-height: 44px;
+  }
+
+  #practice .ranks {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  #practice .ranks button {
+    min-height: 40px;
+    font-size: 0.9rem;
+  }
+
+  #practice .check,
+  #practice .next {
+    min-height: 44px;
+    margin-top: 8px;
+    font-size: 0.95rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
