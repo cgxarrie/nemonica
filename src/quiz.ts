@@ -17,9 +17,103 @@ export interface Range {
   to: number;
 }
 
+export interface CardPerformance {
+  misses: number;
+  correctAnswers: number;
+  correctTimeMs: number;
+}
+
+export type CardPerformanceRecord = Partial<Record<number, CardPerformance>>;
+
 export interface SuitPosition {
   suit: Suit;
   position: number;
+}
+
+export function normalizeCardPerformanceRecord(value: unknown): CardPerformanceRecord {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) return {};
+
+  const normalized: CardPerformanceRecord = {};
+  for (const [positionText, entry] of Object.entries(value)) {
+    const position = Number(positionText);
+    if (!Number.isInteger(position) || position < 1 || position > STACK.length) continue;
+    if (entry == null || typeof entry !== "object" || Array.isArray(entry)) continue;
+    const stats = entry as Record<string, unknown>;
+    const misses = stats.misses;
+    const correctAnswers = stats.correctAnswers;
+    const correctTimeMs = stats.correctTimeMs;
+    if (
+      typeof misses !== "number" || !Number.isInteger(misses) || misses < 0 ||
+      typeof correctAnswers !== "number" || !Number.isInteger(correctAnswers) || correctAnswers < 0 ||
+      typeof correctTimeMs !== "number" || !Number.isFinite(correctTimeMs) || correctTimeMs < 0
+    ) {
+      continue;
+    }
+    normalized[position] = {
+      misses,
+      correctAnswers,
+      correctTimeMs,
+    };
+  }
+  return normalized;
+}
+
+export function recordCardAnswer(
+  record: CardPerformanceRecord,
+  position: number,
+  correct: boolean,
+  elapsedMs: number,
+): CardPerformanceRecord {
+  if (!Number.isInteger(position) || position < 1 || position > STACK.length) {
+    throw new RangeError(`Invalid card position: ${position}`);
+  }
+  if (!Number.isFinite(elapsedMs)) throw new RangeError(`Invalid response time: ${elapsedMs}`);
+  const previous = record[position] ?? { misses: 0, correctAnswers: 0, correctTimeMs: 0 };
+  const next = { ...record };
+  next[position] = correct
+    ? {
+        ...previous,
+        correctAnswers: previous.correctAnswers + 1,
+        correctTimeMs: previous.correctTimeMs + Math.max(0, elapsedMs),
+      }
+    : { ...previous, misses: previous.misses + 1 };
+  return next;
+}
+
+export function priorityPositions(
+  record: CardPerformanceRecord,
+  from = 1,
+  to = STACK.length,
+  limit = 10,
+): number[] {
+  if (!Number.isInteger(limit) || limit < 0) throw new RangeError(`Invalid focus list size: ${limit}`);
+  const eligiblePositions = Object.keys(record)
+    .map(Number)
+    .filter((position) =>
+      Number.isInteger(position) &&
+      position >= 1 &&
+      position <= STACK.length &&
+      position >= from &&
+      position <= to
+    );
+  const byMisses = eligiblePositions
+    .filter((position) => (record[position]?.misses ?? 0) > 0)
+    .sort((left, right) =>
+      (record[right]?.misses ?? 0) - (record[left]?.misses ?? 0) || left - right
+    )
+    .slice(0, limit);
+  const byAverageTime = eligiblePositions
+    .filter((position) => (record[position]?.correctAnswers ?? 0) > 0)
+    .sort((left, right) => {
+      const leftStats = record[left]!;
+      const rightStats = record[right]!;
+      const averageDifference =
+        rightStats.correctTimeMs / rightStats.correctAnswers -
+        leftStats.correctTimeMs / leftStats.correctAnswers;
+      return averageDifference || left - right;
+    })
+    .slice(0, limit);
+  return [...new Set([...byMisses, ...byAverageTime])];
 }
 
 export function toggleQuestionMode(
@@ -82,12 +176,30 @@ export function pickQuestion(
   mode: QuestionMode = "both",
 ): Question {
   const range = normalizeRange(from, to);
-  const pool: number[] = [];
-  for (let position = range.from; position <= range.to; position += 1) {
-    if (position !== previous) pool.push(position);
-  }
+  const positions = Array.from(
+    { length: range.to - range.from + 1 },
+    (_, index) => range.from + index,
+  );
+  return pickQuestionFromPositions(positions, previous, random, mode);
+}
 
-  const position = pool[Math.floor(random() * pool.length)];
+export function pickQuestionFromPositions(
+  positions: readonly number[],
+  previous: number | null,
+  random: () => number = Math.random,
+  mode: QuestionMode = "both",
+): Question {
+  if (positions.length === 0) throw new Error("Cannot pick a question from an empty position list.");
+  const uniquePositions = [...new Set(positions)];
+  if (uniquePositions.some((position) =>
+    !Number.isInteger(position) || position < 1 || position > STACK.length
+  )) {
+    throw new RangeError("Question positions must be integers between 1 and 52.");
+  }
+  const pool = uniquePositions.filter((position) => position !== previous);
+  const choices = pool.length > 0 ? pool : uniquePositions;
+
+  const position = choices[Math.floor(random() * choices.length)];
   const askFor = mode === "both"
     ? (random() < 0.5 ? "position" : "card")
     : mode === "positions" ? "position" : "card";
@@ -101,9 +213,25 @@ export function buildRaceQuestions(
   mode: QuestionMode = "both",
 ): Question[] {
   const range = normalizeRange(from, to);
+  const positions = Array.from({ length: range.to - range.from + 1 }, (_, index) => range.from + index);
+  return buildRaceQuestionsFromPositions(positions, random, mode);
+}
+
+export function buildRaceQuestionsFromPositions(
+  positions: readonly number[],
+  random: () => number = Math.random,
+  mode: QuestionMode = "both",
+): Question[] {
   const questions: Question[] = [];
 
-  for (let position = range.from; position <= range.to; position += 1) {
+  const uniquePositions = [...new Set(positions)];
+  if (uniquePositions.some((position) =>
+    !Number.isInteger(position) || position < 1 || position > STACK.length
+  )) {
+    throw new RangeError("Race positions must be integers between 1 and 52.");
+  }
+
+  for (const position of uniquePositions) {
     const card = STACK[position - 1];
     if (mode === "positions" || mode === "both") {
       questions.push({ position, card, askFor: "position" });

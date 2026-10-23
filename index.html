@@ -104,7 +104,7 @@
       </details>
 
       <div class="views" role="tablist" aria-label="Modo de juego y vistas">
-        <button type="button" role="tab" id="tab-practice" aria-selected="true" aria-controls="practice">
+        <button type="button" role="tab" id="tab-practice" aria-selected="true" aria-controls="practice focus-panel">
           Practicar
         </button>
         <button
@@ -128,7 +128,32 @@
         >
           Valor
         </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-focus"
+          aria-selected="false"
+          aria-controls="focus-panel practice"
+        >
+          Repaso
+        </button>
       </div>
+      <section id="focus-panel" role="tabpanel" aria-labelledby="tab-focus" hidden>
+        <div id="focus-setup" class="focus-panel">
+          <p class="race-title">Repaso</p>
+          <p class="hint">Prioriza las 10 cartas con más fallos y las 10 con mayor tiempo medio de respuesta correcta, dentro del rango elegido.</p>
+          <p class="focus-card-count" id="focus-card-count"></p>
+          <ol class="focus-card-list" id="focus-card-list"></ol>
+          <div class="focus-actions">
+            <button type="button" id="focus-practice-start" class="check">Practicar</button>
+            <button type="button" id="focus-race-start" class="check">Carrera</button>
+          </div>
+        </div>
+        <div id="focus-session-controls" class="focus-panel" hidden>
+          <p class="hint">Práctica enfocada en tus cartas prioritarias.</p>
+          <button type="button" id="exit-focus" class="text-btn">Salir del repaso</button>
+        </div>
+      </section>
       <section id="race-panel" role="tabpanel" aria-labelledby="tab-race" hidden>
         <div id="race-setup" class="race-panel">
           <p class="race-title">Carrera</p>
@@ -150,7 +175,7 @@
         </div>
       </section>
 
-      <section id="practice" role="tabpanel" aria-labelledby="tab-practice">
+      <section id="practice" role="tabpanel" aria-labelledby="tab-practice tab-focus">
         <div class="stage">
           <div id="prompt"></div>
           <p class="ask" id="ask"></p>

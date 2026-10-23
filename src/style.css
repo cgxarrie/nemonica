@@ -269,7 +269,7 @@ h1 {
 
 .views {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
   margin: 12px 0;
   padding: 4px;
@@ -279,10 +279,13 @@ h1 {
 
 .views button {
   min-height: 44px;
+  min-width: 0;
+  padding: 0 2px;
   border: 0;
   border-radius: 10px;
   background: transparent;
   font-weight: 560;
+  font-size: 0.78rem;
 }
 
 .views button[aria-selected="true"] {
@@ -356,6 +359,36 @@ h1 {
 }
 
 #race-panel {
+  flex: 1;
+}
+
+.focus-panel {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.focus-card-count {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.focus-card-list {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding-left: 24px;
+  font-size: 0.82rem;
+}
+
+.focus-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.focus-actions button {
   flex: 1;
 }
 
