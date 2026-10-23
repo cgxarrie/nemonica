@@ -680,6 +680,18 @@ h1 {
   background: #c03932;
 }
 
+.correct-answer-preview {
+  position: relative;
+  width: 88px;
+  height: 124px;
+}
+
+.correct-answer-preview .feedback-mark {
+  width: 34px;
+  height: 34px;
+  font-size: 1.35rem;
+}
+
 .corner {
   position: absolute;
   font-family: var(--serif);
@@ -785,6 +797,12 @@ h1 {
 .suits button {
   min-height: 52px;
   font-size: 1.25rem;
+}
+
+.keypad button:disabled,
+.ranks button:disabled,
+.suits button:disabled {
+  opacity: 0.55;
 }
 
 .ranks button {

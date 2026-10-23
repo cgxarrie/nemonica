@@ -95,6 +95,7 @@ const positionPreview = must<HTMLElement>("#position-preview");
 const positionOk = must<HTMLButtonElement>("#position-ok");
 const keypad = must<HTMLElement>("#keypad");
 const cardPreview = must<HTMLElement>("#card-preview");
+const correctAnswerDisplay = must<HTMLElement>("#correct-answer-display");
 const ranksEl = must<HTMLElement>("#ranks");
 const suitsEl = must<HTMLElement>("#suits");
 const checkCard = must<HTMLButtonElement>("#check-card");
@@ -1015,23 +1016,27 @@ function renderQuestion(): void {
   const answering = state.phase === "answering";
   const raceActive = isRaceActive();
   const result = state.result;
+  const showCorrectAnswer = result?.right === true && !raceActive;
+  const showAnswerControls = answering || showCorrectAnswer;
   practice.classList.toggle("wrong-feedback", result != null && !result.right);
   prompt.replaceChildren();
 
   if (question.askFor === "position") {
-    ask.textContent = answering ? "¿Qué posición?" : "";
+    ask.textContent = showAnswerControls ? "¿Qué posición?" : "";
     practice.setAttribute("aria-label", `${cardSpoken(question.card)}. ¿Qué posición?`);
   } else {
-    ask.textContent = answering ? "¿Qué carta?" : "";
+    ask.textContent = showAnswerControls ? "¿Qué carta?" : "";
     practice.setAttribute("aria-label", `Posición ${question.position}. ¿Qué carta?`);
   }
 
-  prompt.append(flipCard(question, result));
-  positionEntry.hidden = !(answering && question.askFor === "position");
-  cardEntry.hidden = !(answering && question.askFor === "card");
-  positionPreview.hidden = positionEntry.hidden;
-  cardPreview.hidden = cardEntry.hidden;
-  feedbackBlock.hidden = answering || raceActive;
+  prompt.append(flipCard(question, showCorrectAnswer ? null : result));
+  positionEntry.hidden = !(showAnswerControls && question.askFor === "position");
+  cardEntry.hidden = !(showAnswerControls && question.askFor === "card");
+  positionPreview.hidden = positionEntry.hidden || showCorrectAnswer;
+  cardPreview.hidden = cardEntry.hidden || showCorrectAnswer;
+  correctAnswerDisplay.hidden = !showCorrectAnswer;
+  if (showCorrectAnswer) renderCorrectAnswer(question);
+  feedbackBlock.hidden = answering || raceActive || showCorrectAnswer;
 
   prompt.classList.remove("swap");
   void prompt.offsetWidth;
@@ -1103,6 +1108,20 @@ function feedbackMark(right: boolean): HTMLElement {
   return mark;
 }
 
+function renderCorrectAnswer(question: Question): void {
+  correctAnswerDisplay.replaceChildren();
+  correctAnswerDisplay.setAttribute(
+    "aria-label",
+    question.askFor === "position"
+      ? `Respuesta correcta: posición ${question.position}.`
+      : `Respuesta correcta: ${cardSpoken(question.card)}.`,
+  );
+  correctAnswerDisplay.append(
+    question.askFor === "position" ? positionCard(question.position) : playingCard(question.card),
+    feedbackMark(true),
+  );
+}
+
 function playingCard(card: Card): HTMLElement {
   const face = document.createElement("div");
   face.className = `playing-card ${isRed(card.suit) ? "red" : "black"}`;
@@ -1128,19 +1147,24 @@ function renderDraft(): void {
   const empty = state.draft === "";
   positionPreview.textContent = empty ? "—" : state.draft;
   positionPreview.classList.toggle("placeholder", empty);
-  positionOk.disabled = empty;
+  positionOk.disabled = empty || state.phase !== "answering";
+  for (const button of keypad.querySelectorAll("button")) {
+    button.disabled = state.phase !== "answering";
+  }
 }
 
 function renderSelection(): void {
   for (const button of ranksEl.querySelectorAll("button")) {
     button.setAttribute("aria-pressed", String(button.dataset.rank === state.rank));
+    button.disabled = state.phase !== "answering";
   }
   for (const button of suitsEl.querySelectorAll("button")) {
     button.setAttribute("aria-pressed", String(button.dataset.suit === state.suit));
+    button.disabled = state.phase !== "answering";
   }
 
   const ready = state.rank != null && state.suit != null;
-  checkCard.disabled = !ready;
+  checkCard.disabled = !ready || state.phase !== "answering";
   cardPreview.className = "typed";
   if (ready && state.rank && state.suit) {
     cardPreview.classList.add(isRed(state.suit) ? "red" : "black");
