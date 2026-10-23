@@ -1193,7 +1193,7 @@ function renderFeedback(result: Result): void {
     mark.className = "answer-feedback-wrong-mark";
     mark.setAttribute("role", "img");
     mark.setAttribute("aria-label", "Respuesta incorrecta");
-    mark.textContent = "✓";
+    mark.textContent = "×";
     const answerText = result.positionAnswer != null
       ? String(result.positionAnswer)
       : result.cardAnswer

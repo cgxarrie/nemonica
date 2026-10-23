@@ -703,14 +703,14 @@ h1 {
   justify-content: center;
   gap: 4px;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 1rem;
   overflow-wrap: anywhere;
 }
 
 .answer-feedback-wrong-mark {
   flex: 0 0 auto;
   color: #ff7168;
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   font-weight: 750;
   line-height: 1;
 }
