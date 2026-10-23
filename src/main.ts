@@ -1018,7 +1018,7 @@ function renderQuestion(): void {
   const result = state.result;
   const showAnswerOutcome = result != null && !raceActive;
   const showAnswerControls = answering || result?.right === true;
-  practice.classList.remove("wrong-feedback");
+  practice.classList.toggle("incorrect-feedback", result?.right === false && !raceActive);
   prompt.replaceChildren();
 
   if (question.askFor === "position") {
