@@ -4,7 +4,7 @@ export const SUIT_POSITION_ORDER: readonly Suit[] = ["c", "h", "s", "d"];
 
 /** "position" shows a card and asks where it sits. "card" shows a position and asks which card. */
 export type AskFor = "position" | "card";
-export type QuestionMode = "cards" | "positions" | "both" | "none";
+export type QuestionMode = "cards" | "positions" | "both";
 
 export interface Question {
   position: number;
@@ -20,6 +20,25 @@ export interface Range {
 export interface SuitPosition {
   suit: Suit;
   position: number;
+}
+
+export function toggleQuestionMode(
+  current: QuestionMode,
+  toggled: "cards" | "positions",
+): QuestionMode {
+  const cardsEnabled = current === "cards" || current === "both";
+  const positionsEnabled = current === "positions" || current === "both";
+  let nextCardsEnabled = toggled === "cards" ? !cardsEnabled : cardsEnabled;
+  let nextPositionsEnabled = toggled === "positions" ? !positionsEnabled : positionsEnabled;
+
+  if (!nextCardsEnabled && !nextPositionsEnabled) {
+    if (toggled === "cards") nextPositionsEnabled = true;
+    else nextCardsEnabled = true;
+  }
+
+  return nextCardsEnabled
+    ? nextPositionsEnabled ? "both" : "cards"
+    : "positions";
 }
 
 export function positionsForRank(rank: Rank): SuitPosition[] {
@@ -62,7 +81,6 @@ export function pickQuestion(
   random: () => number = Math.random,
   mode: QuestionMode = "both",
 ): Question {
-  if (mode === "none") throw new Error("At least one question type must be active.");
   const range = normalizeRange(from, to);
   const pool: number[] = [];
   for (let position = range.from; position <= range.to; position += 1) {

@@ -6,7 +6,7 @@ The interface is in Spanish.
 
 ## Practice
 
-Set **Desde** and **Hasta**, or pick a shortcut such as `1–13` or `Todas`. Questions stay inside that range. In **Practicar** and **Carrera**, toggle the card-name and position icons on or off to choose what to be asked; both can be active. With both off, questions pause until one is enabled. A position, and therefore its card, is never asked twice in a row. The range is at least two positions wide and is remembered in the browser.
+Set **Desde** and **Hasta**, or pick a shortcut such as `1–13` or **Todas**. Questions stay inside that range. In **Practicar** and **Carrera**, toggle the card-name and position icons on or off to choose what to be asked; both can be active, but at least one always stays on. Turning off the only active type automatically enables the other. A position, and therefore its card, is never asked twice in a row. The range is at least two positions wide and is remembered in the browser.
 
 **Practicar** keeps asking questions for ongoing practice, showing feedback after each answer. **Carrera** asks each enabled question type for every position in the selected range exactly once, in random order, without per-answer feedback. At the end, it shows the elapsed time, score, and any mistakes with their correct answers. **Mazo** shows the full order, with the selected range highlighted.
 

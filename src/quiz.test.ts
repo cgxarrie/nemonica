@@ -9,6 +9,7 @@ import {
   pickQuestion,
   pickSuitPositionRank,
   positionsForRank,
+  toggleQuestionMode,
   type QuestionMode,
   SUIT_POSITION_ORDER,
 } from "./quiz.ts";
@@ -119,11 +120,15 @@ test("race questions include only the selected question direction", () => {
   }
 
   assert.equal(buildRaceQuestions(3, 7, () => 0, "both").length, 10);
-  assert.deepEqual(buildRaceQuestions(3, 7, () => 0, "none"), []);
 });
 
-test("practice question selection requires an active question type", () => {
-  assert.throws(() => pickQuestion(1, 10, null, () => 0, "none"));
+test("question type toggles always leave at least one type active", () => {
+  assert.equal(toggleQuestionMode("both", "cards"), "positions");
+  assert.equal(toggleQuestionMode("both", "positions"), "cards");
+  assert.equal(toggleQuestionMode("cards", "cards"), "positions");
+  assert.equal(toggleQuestionMode("positions", "positions"), "cards");
+  assert.equal(toggleQuestionMode("cards", "positions"), "both");
+  assert.equal(toggleQuestionMode("positions", "cards"), "both");
 });
 
 test("race question order can be controlled for deterministic tests", () => {
