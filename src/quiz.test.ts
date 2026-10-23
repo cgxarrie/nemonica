@@ -108,10 +108,9 @@ test("race questions ask each position and card once in a shuffled order", () =>
 });
 
 test("race questions include only the selected question direction", () => {
-  const expected: Record<QuestionMode, "card" | "position"> = {
+  const expected: Record<"cards" | "positions", "card" | "position"> = {
     cards: "card",
     positions: "position",
-    both: "position",
   };
   for (const mode of ["cards", "positions"] as const) {
     const questions = buildRaceQuestions(3, 7, () => 0, mode);
@@ -120,6 +119,11 @@ test("race questions include only the selected question direction", () => {
   }
 
   assert.equal(buildRaceQuestions(3, 7, () => 0, "both").length, 10);
+  assert.deepEqual(buildRaceQuestions(3, 7, () => 0, "none"), []);
+});
+
+test("practice question selection requires an active question type", () => {
+  assert.throws(() => pickQuestion(1, 10, null, () => 0, "none"));
 });
 
 test("race question order can be controlled for deterministic tests", () => {

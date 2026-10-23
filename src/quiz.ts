@@ -4,7 +4,7 @@ export const SUIT_POSITION_ORDER: readonly Suit[] = ["c", "h", "s", "d"];
 
 /** "position" shows a card and asks where it sits. "card" shows a position and asks which card. */
 export type AskFor = "position" | "card";
-export type QuestionMode = "cards" | "positions" | "both";
+export type QuestionMode = "cards" | "positions" | "both" | "none";
 
 export interface Question {
   position: number;
@@ -62,6 +62,7 @@ export function pickQuestion(
   random: () => number = Math.random,
   mode: QuestionMode = "both",
 ): Question {
+  if (mode === "none") throw new Error("At least one question type must be active.");
   const range = normalizeRange(from, to);
   const pool: number[] = [];
   for (let position = range.from; position <= range.to; position += 1) {
@@ -86,8 +87,12 @@ export function buildRaceQuestions(
 
   for (let position = range.from; position <= range.to; position += 1) {
     const card = STACK[position - 1];
-    if (mode !== "cards") questions.push({ position, card, askFor: "position" });
-    if (mode !== "positions") questions.push({ position, card, askFor: "card" });
+    if (mode === "positions" || mode === "both") {
+      questions.push({ position, card, askFor: "position" });
+    }
+    if (mode === "cards" || mode === "both") {
+      questions.push({ position, card, askFor: "card" });
+    }
   }
 
   for (let index = questions.length - 1; index > 0; index -= 1) {

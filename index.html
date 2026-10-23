@@ -102,20 +102,34 @@
           aria-selected="false"
           aria-controls="suit-positions-view"
         >
-          Suit Positions
+          Valor
         </button>
       </div>
 
-      <div id="question-mode-selector" class="question-mode-selector">
-        <label for="question-mode">Preguntar por</label>
-        <select id="question-mode">
-          <option value="cards">Cartas</option>
-          <option value="positions">Posiciones</option>
-          <option value="both" selected>Ambos</option>
-        </select>
+      <div id="question-mode-selector" class="question-mode-selector" role="group" aria-label="Tipos de pregunta">
+        <button
+          type="button"
+          class="question-mode-toggle"
+          data-question-mode="cards"
+          aria-label="Preguntar el nombre de la carta"
+          aria-pressed="true"
+        >
+          <span class="question-mode-icon card-icon" aria-hidden="true"><span>A</span><span>♠</span></span>
+          <span>Nombre</span>
+        </button>
+        <button
+          type="button"
+          class="question-mode-toggle"
+          data-question-mode="positions"
+          aria-label="Preguntar la posición"
+          aria-pressed="true"
+        >
+          <span class="question-mode-icon position-icon" aria-hidden="true">12</span>
+          <span>Posición</span>
+        </button>
       </div>
-      <p class="hint question-mode-help">
-        Cartas: identifica la carta de una posición. Posiciones: indica dónde está una carta. Ambos: mezcla las dos preguntas.
+      <p class="hint question-mode-help" id="question-mode-help">
+        Activa uno o ambos tipos de pregunta.
       </p>
 
       <section id="race-panel" role="tabpanel" aria-labelledby="tab-race" hidden>
@@ -181,7 +195,7 @@
 
       <section id="suit-positions-view" role="tabpanel" aria-labelledby="tab-suit-positions" hidden>
         <div class="suit-positions-panel">
-          <p class="race-title">Suit Positions</p>
+          <p class="race-title">Valor</p>
           <p class="hint">Indica la posición de cada carta con este valor. Responde en el orden de los palos.</p>
           <p class="suit-positions-prompt">Valor: <strong id="suit-positions-rank"></strong></p>
           <div id="suit-position-inputs" class="suit-position-inputs"></div>
