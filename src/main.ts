@@ -817,7 +817,6 @@ function submitSuitPositions(): void {
     const position = Number(answer);
     return position >= 1 && position <= 52 ? position : null;
   });
-  if (answers.some((answer) => answer == null)) return;
 
   const correctPositions = positionsForRank(suitPositionRank);
   const right = correctPositions.every(({ position }, index) => answers[index] === position);
@@ -881,14 +880,14 @@ function renderSuitPositions(): void {
         answer.replaceChildren(mark, correctAnswer);
       } else {
         const userAnswer = document.createElement("span");
-        userAnswer.textContent = suitPositionAnswers[index];
+        userAnswer.textContent = suitPositionAnswers[index] || "Sin respuesta";
         answer.replaceChildren(userAnswer, mark, correctAnswer);
       }
       answer.setAttribute(
         "aria-label",
         correct
           ? `Correcta: ${cardSpoken(card)}, ${correctPositions[index].position}`
-          : `Tu respuesta: ${suitPositionAnswers[index]}. Incorrecta. Correcta: ${cardSpoken(card)}, ${correctPositions[index].position}`,
+          : `${suitPositionAnswers[index] ? `Tu respuesta: ${suitPositionAnswers[index]}. ` : "Sin respuesta. "}Incorrecta. Correcta: ${cardSpoken(card)}, ${correctPositions[index].position}`,
       );
     } else {
       answer?.remove();
@@ -896,6 +895,7 @@ function renderSuitPositions(): void {
   });
 
   const ready = suitPositionAnswers.every((answer) => {
+    if (answer === "") return true;
     if (!/^\d{1,2}$/.test(answer)) return false;
     const position = Number(answer);
     return position >= 1 && position <= 52;
@@ -923,7 +923,6 @@ function submitSuitCards(): void {
     const position = Number(answer);
     return position >= 1 && position <= 52 ? position : null;
   });
-  if (answers.some((answer) => answer == null)) return;
 
   const right = suitCardQuestions.every(({ position }, index) => answers[index] === position);
   state.attempts += 1;
@@ -995,18 +994,19 @@ function renderSuitCards(): void {
       answer.replaceChildren(mark, correctAnswer);
     } else {
       const userAnswer = document.createElement("span");
-      userAnswer.textContent = suitCardAnswers[index];
+      userAnswer.textContent = suitCardAnswers[index] || "Sin respuesta";
       answer.replaceChildren(userAnswer, mark, correctAnswer);
     }
     answer.setAttribute(
       "aria-label",
       correct
         ? `Correcta: ${cardSpoken(card)}, ${question.position}`
-        : `Tu respuesta: ${suitCardAnswers[index]}. Incorrecta. Correcta: ${cardSpoken(card)}, ${question.position}`,
+        : `${suitCardAnswers[index] ? `Tu respuesta: ${suitCardAnswers[index]}. ` : "Sin respuesta. "}Incorrecta. Correcta: ${cardSpoken(card)}, ${question.position}`,
     );
   });
 
   const ready = suitCardAnswers.every((answer) => {
+    if (answer === "") return true;
     if (!/^\d{1,2}$/.test(answer)) return false;
     const position = Number(answer);
     return position >= 1 && position <= 52;
