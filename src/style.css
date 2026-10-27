@@ -144,7 +144,25 @@ h1 {
   background: rgba(0, 0, 0, 0.2);
 }
 
+.mode-selector {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
 .range > summary {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 560;
+  list-style: none;
+}
+
+.mode-selector > summary {
   display: flex;
   min-height: 44px;
   align-items: center;
@@ -159,7 +177,21 @@ h1 {
   display: none;
 }
 
+.mode-selector > summary::-webkit-details-marker {
+  display: none;
+}
+
 .range > summary::after {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  content: "";
+  transform: rotate(45deg) translateY(-2px);
+}
+
+.mode-selector > summary::after {
   width: 8px;
   height: 8px;
   flex: 0 0 8px;
@@ -173,12 +205,27 @@ h1 {
   transform: rotate(225deg) translate(-1px, -1px);
 }
 
+.mode-selector[open] > summary::after {
+  transform: rotate(225deg) translate(-1px, -1px);
+}
+
 .range-summary {
   margin-left: auto;
   color: var(--muted);
   font-size: 0.88rem;
   font-variant-numeric: tabular-nums;
   font-weight: 400;
+}
+
+.mode-summary {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 400;
+}
+
+.mode-content {
+  margin-top: 10px;
 }
 
 .range-content {
@@ -269,9 +316,9 @@ h1 {
 
 .views {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
-  margin: 12px 0;
+  margin: 0;
   padding: 4px;
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.2);
@@ -415,6 +462,10 @@ h1 {
 .suit-position-inputs {
   display: grid;
   gap: 8px;
+}
+
+.suit-card-inputs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .suit-position-row {

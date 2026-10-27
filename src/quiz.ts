@@ -1,4 +1,4 @@
-import { RANKS, STACK, sameCard, type Card, type Rank, type Suit } from "./stack.ts";
+import { RANKS, STACK, SUITS, sameCard, type Card, type Rank, type Suit } from "./stack.ts";
 
 export const SUIT_POSITION_ORDER: readonly Suit[] = ["c", "h", "s", "d"];
 
@@ -26,6 +26,12 @@ export interface CardPerformance {
 export type CardPerformanceRecord = Partial<Record<number, CardPerformance>>;
 
 export interface SuitPosition {
+  suit: Suit;
+  position: number;
+}
+
+export interface SuitCardPosition {
+  rank: Rank;
   suit: Suit;
   position: number;
 }
@@ -148,6 +154,30 @@ export function pickSuitPositionRank(
 ): Rank {
   const pool = RANKS.filter((rank) => rank !== previous);
   return pool[Math.floor(random() * pool.length)];
+}
+
+export function pickSuitPositionSuit(
+  previous: Suit | null,
+  random: () => number = Math.random,
+): Suit {
+  const pool = SUITS.filter((suit) => suit !== previous);
+  return pool[Math.floor(random() * pool.length)];
+}
+
+export function positionsForSuit(
+  suit: Suit,
+  random: () => number = Math.random,
+): SuitCardPosition[] {
+  const ranks = [...RANKS];
+  for (let index = ranks.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [ranks[index], ranks[swapIndex]] = [ranks[swapIndex], ranks[index]];
+  }
+  return ranks.map((rank) => ({
+    rank,
+    suit,
+    position: STACK.findIndex((card) => card.rank === rank && card.suit === suit) + 1,
+  }));
 }
 
 export function clampPosition(n: number): number {

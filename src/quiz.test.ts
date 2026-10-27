@@ -11,6 +11,8 @@ import {
   pickQuestion,
   pickQuestionFromPositions,
   pickSuitPositionRank,
+  pickSuitPositionSuit,
+  positionsForSuit,
   positionsForRank,
   priorityPositions,
   recordCardAnswer,
@@ -226,5 +228,27 @@ test("suit-position rank selection avoids repeating the previous rank", () => {
   for (const rank of ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"] as Rank[]) {
     const next = pickSuitPositionRank(rank, () => 0);
     assert.notEqual(next, rank);
+  }
+});
+
+test("suit-position suit selection avoids repeating the previous suit", () => {
+  for (const suit of ["c", "h", "s", "d"] as const) {
+    assert.notEqual(pickSuitPositionSuit(suit, () => 0), suit);
+  }
+});
+
+test("suit positions include each card in the chosen suit in shuffled rank order", () => {
+  const positions = positionsForSuit("h", () => 0);
+  assert.equal(positions.length, 13);
+  assert.deepEqual(new Set(positions.map(({ rank }) => rank)), new Set([
+    "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+  ]));
+  assert.notDeepEqual(positions.map(({ rank }) => rank), [
+    "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+  ]);
+  for (const { rank, suit, position } of positions) {
+    assert.equal(suit, "h");
+    assert.equal(STACK[position - 1].rank, rank);
+    assert.equal(STACK[position - 1].suit, suit);
   }
 });
