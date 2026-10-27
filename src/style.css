@@ -464,6 +464,10 @@ h1 {
   gap: 8px;
 }
 
+.suit-card-inputs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .suit-position-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 76px minmax(0, auto);

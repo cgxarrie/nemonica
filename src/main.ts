@@ -950,7 +950,8 @@ function nextSuitCardRound(): void {
 }
 
 function renderSuitCards(): void {
-  suitCardsSuit.textContent = `${SUIT_NAME[suitCardSuit]} ${SUIT_SYMBOL[suitCardSuit]}`;
+  suitCardsSuit.textContent = SUIT_SYMBOL[suitCardSuit];
+  suitCardsSuit.setAttribute("aria-label", SUIT_NAME[suitCardSuit]);
   const rows = suitCardInputs.querySelectorAll<HTMLElement>(".suit-position-row");
   rows.forEach((row, index) => {
     const question = suitCardQuestions[index];
