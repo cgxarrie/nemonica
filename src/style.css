@@ -430,7 +430,7 @@ h1 {
 }
 
 .suit-position-row.revealed {
-  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .suit-position-row input {
@@ -465,23 +465,19 @@ h1 {
 .suit-position-answer {
   display: flex;
   align-items: center;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 4px 10px;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-family: var(--serif);
+  font-size: 3rem;
   font-weight: 600;
-  justify-self: end;
-}
-
-.suit-position-answer.good {
-  color: var(--good);
-}
-
-.suit-position-answer.bad {
-  color: var(--red);
+  line-height: 1.1;
+  justify-self: start;
 }
 
 .suit-position-result-mark {
-  font-size: 1rem;
+  font-family: var(--sans);
+  font-size: 2rem;
   font-weight: 750;
   line-height: 1;
 }

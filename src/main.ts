@@ -807,14 +807,20 @@ function renderSuitPositions(): void {
       mark.className = `suit-position-result-mark ${correct ? "good" : "bad"}`;
       mark.textContent = correct ? "✓" : "✕";
       mark.setAttribute("aria-hidden", "true");
-      answer.classList.toggle("good", correct);
-      answer.classList.toggle("bad", !correct);
-      answer.replaceChildren(mark, document.createTextNode(
-        `${cardLabel(card)} · ${correctPositions[index].position}`,
-      ));
+      const correctAnswer = document.createElement("span");
+      correctAnswer.textContent = `${cardLabel(card)} · ${correctPositions[index].position}`;
+      if (correct) {
+        answer.replaceChildren(mark, correctAnswer);
+      } else {
+        const userAnswer = document.createElement("span");
+        userAnswer.textContent = suitPositionAnswers[index];
+        answer.replaceChildren(userAnswer, mark, correctAnswer);
+      }
       answer.setAttribute(
         "aria-label",
-        `${correct ? "Correcta" : "Incorrecta"}: ${cardSpoken(card)}, ${correctPositions[index].position}`,
+        correct
+          ? `Correcta: ${cardSpoken(card)}, ${correctPositions[index].position}`
+          : `Tu respuesta: ${suitPositionAnswers[index]}. Incorrecta. Correcta: ${cardSpoken(card)}, ${correctPositions[index].position}`,
       );
     } else {
       answer?.remove();
