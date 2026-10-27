@@ -430,7 +430,7 @@ h1 {
 }
 
 .suit-position-row.revealed {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
 }
 
 .suit-position-row input {
