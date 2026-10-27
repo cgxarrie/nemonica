@@ -459,9 +459,26 @@ h1 {
 }
 
 .suit-position-answer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: var(--muted);
   font-size: 0.8rem;
   white-space: nowrap;
+}
+
+.suit-position-result-mark {
+  font-size: 1rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.suit-position-result-mark.good {
+  color: var(--good);
+}
+
+.suit-position-result-mark.bad {
+  color: var(--red);
 }
 
 .suit-positions-feedback {

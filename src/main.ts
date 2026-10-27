@@ -794,12 +794,22 @@ function renderSuitPositions(): void {
     input.value = suitPositionAnswers[index];
     let answer = row.querySelector<HTMLElement>(".suit-position-answer");
     if (suitPositionsSubmitted) {
+      const correct = Number(suitPositionAnswers[index]) === correctPositions[index].position;
       if (!answer) {
         answer = document.createElement("span");
         answer.className = "suit-position-answer";
         row.append(answer);
       }
-      answer.textContent = `Correcta: ${correctPositions[index].position}`;
+      const mark = document.createElement("span");
+      mark.className = `suit-position-result-mark ${correct ? "good" : "bad"}`;
+      mark.textContent = correct ? "✓" : "✕";
+      mark.setAttribute("aria-hidden", "true");
+      answer.replaceChildren(mark);
+      answer.setAttribute(
+        "aria-label",
+        correct ? "Respuesta correcta" : `Incorrecta. Posición correcta: ${correctPositions[index].position}`,
+      );
+      if (!correct) answer.append(`Correcta: ${correctPositions[index].position}`);
     } else {
       answer?.remove();
     }
