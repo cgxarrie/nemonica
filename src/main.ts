@@ -782,6 +782,7 @@ function renderSuitPositions(): void {
   inputs.forEach((input, index) => {
     const row = input.closest<HTMLElement>(".suit-position-row");
     if (!row) throw new Error("Missing suit-position row");
+    row.classList.toggle("revealed", suitPositionsSubmitted);
     row.classList.toggle(
       "correct",
       suitPositionsSubmitted && Number(suitPositionAnswers[index]) === correctPositions[index].position,
@@ -792,14 +793,35 @@ function renderSuitPositions(): void {
     );
     input.disabled = suitPositionsSubmitted;
     input.value = suitPositionAnswers[index];
+    input.hidden = suitPositionsSubmitted;
     let answer = row.querySelector<HTMLElement>(".suit-position-answer");
     if (suitPositionsSubmitted) {
+      const correct = Number(suitPositionAnswers[index]) === correctPositions[index].position;
+      const card = { rank: suitPositionRank, suit: correctPositions[index].suit };
       if (!answer) {
         answer = document.createElement("span");
         answer.className = "suit-position-answer";
         row.append(answer);
       }
-      answer.textContent = `Correcta: ${correctPositions[index].position}`;
+      const mark = document.createElement("span");
+      mark.className = `suit-position-result-mark ${correct ? "good" : "bad"}`;
+      mark.textContent = correct ? "✓" : "✕";
+      mark.setAttribute("aria-hidden", "true");
+      const correctAnswer = document.createElement("span");
+      correctAnswer.textContent = `${cardLabel(card)} · ${correctPositions[index].position}`;
+      if (correct) {
+        answer.replaceChildren(mark, correctAnswer);
+      } else {
+        const userAnswer = document.createElement("span");
+        userAnswer.textContent = suitPositionAnswers[index];
+        answer.replaceChildren(userAnswer, mark, correctAnswer);
+      }
+      answer.setAttribute(
+        "aria-label",
+        correct
+          ? `Correcta: ${cardSpoken(card)}, ${correctPositions[index].position}`
+          : `Tu respuesta: ${suitPositionAnswers[index]}. Incorrecta. Correcta: ${cardSpoken(card)}, ${correctPositions[index].position}`,
+      );
     } else {
       answer?.remove();
     }

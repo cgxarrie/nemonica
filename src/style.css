@@ -419,7 +419,7 @@ h1 {
 
 .suit-position-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 76px auto;
+  grid-template-columns: minmax(0, 1fr) 76px minmax(0, auto);
   align-items: center;
   gap: 10px;
   min-height: 52px;
@@ -427,6 +427,10 @@ h1 {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
+}
+
+.suit-position-row.revealed {
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
 }
 
 .suit-position-row input {
@@ -459,9 +463,28 @@ h1 {
 }
 
 .suit-position-answer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
   color: var(--muted);
-  font-size: 0.8rem;
-  white-space: nowrap;
+  font-size: 1rem;
+  font-weight: 600;
+  justify-self: start;
+}
+
+.suit-position-result-mark {
+  font-size: 1rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.suit-position-result-mark.good {
+  color: var(--good);
+}
+
+.suit-position-result-mark.bad {
+  color: var(--red);
 }
 
 .suit-positions-feedback {
