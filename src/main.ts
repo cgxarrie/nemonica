@@ -55,6 +55,8 @@ const toDec = must<HTMLButtonElement>("#to-dec");
 const toInc = must<HTMLButtonElement>("#to-inc");
 const rangeSummary = must<HTMLElement>("#range-summary");
 const presets = must<HTMLElement>("#presets");
+const modeSelector = must<HTMLDetailsElement>(".mode-selector");
+const modeSummary = must<HTMLElement>("#mode-summary");
 const tabPractice = must<HTMLButtonElement>("#tab-practice");
 const tabRace = must<HTMLButtonElement>("#tab-race");
 const tabStack = must<HTMLButtonElement>("#tab-stack");
@@ -405,12 +407,12 @@ function bindEvents(): void {
     updateRange(normalizeRange(Number(button.dataset.from), Number(button.dataset.to)));
   });
 
-  tabPractice.addEventListener("click", () => setView("practice"));
-  tabRace.addEventListener("click", () => setView("race"));
-  tabStack.addEventListener("click", () => setView("stack"));
-  tabSuitPositions.addEventListener("click", () => setView("suit-positions"));
-  tabSuitCards.addEventListener("click", () => setView("suit-cards"));
-  tabFocus.addEventListener("click", () => setView("focus"));
+  tabPractice.addEventListener("click", () => selectViewFromMenu("practice"));
+  tabRace.addEventListener("click", () => selectViewFromMenu("race"));
+  tabStack.addEventListener("click", () => selectViewFromMenu("stack"));
+  tabSuitPositions.addEventListener("click", () => selectViewFromMenu("suit-positions"));
+  tabSuitCards.addEventListener("click", () => selectViewFromMenu("suit-cards"));
+  tabFocus.addEventListener("click", () => selectViewFromMenu("focus"));
   startRace.addEventListener("click", () => startRaceSession());
   restartRace.addEventListener("click", () =>
     startRaceSession(state.racePositions ? currentFocusPositions() : null)
@@ -516,6 +518,14 @@ function setView(view: View): void {
   render();
 }
 
+function selectViewFromMenu(view: View): void {
+  setView(view);
+  if (modeSelector.open) {
+    modeSelector.open = false;
+    modeSelector.querySelector("summary")?.focus();
+  }
+}
+
 function renderView(): void {
   const raceActive = isRaceActive();
   rangeSelector.hidden =
@@ -539,6 +549,14 @@ function renderView(): void {
   tabSuitPositions.setAttribute("aria-selected", String(state.view === "suit-positions"));
   tabSuitCards.setAttribute("aria-selected", String(state.view === "suit-cards"));
   tabFocus.setAttribute("aria-selected", String(state.view === "focus"));
+  modeSummary.textContent = {
+    practice: "Práctica",
+    race: "Carrera",
+    stack: "Mazo",
+    "suit-positions": "Valor",
+    "suit-cards": "Palo",
+    focus: "Repaso",
+  }[state.view];
   renderQuestionMode();
 }
 

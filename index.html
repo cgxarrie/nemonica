@@ -103,50 +103,58 @@
         </div>
       </details>
 
-      <div class="views" role="tablist" aria-label="Modo de juego y vistas">
-        <button type="button" role="tab" id="tab-practice" aria-selected="true" aria-controls="practice focus-panel">
-          Practicar
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="tab-race"
-          aria-selected="false"
-          aria-controls="race-panel practice"
-        >
-          Carrera
-        </button>
-        <button type="button" role="tab" id="tab-stack" aria-selected="false" aria-controls="stack-view">
-          Mazo
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="tab-suit-positions"
-          aria-selected="false"
-          aria-controls="suit-positions-view"
-        >
-          Valor
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="tab-suit-cards"
-          aria-selected="false"
-          aria-controls="suit-cards-view"
-        >
-          Palo
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="tab-focus"
-          aria-selected="false"
-          aria-controls="focus-panel practice"
-        >
-          Repaso
-        </button>
-      </div>
+      <details class="mode-selector">
+        <summary>
+          <span>Modo</span>
+          <span class="mode-summary" id="mode-summary">Práctica</span>
+        </summary>
+        <div class="mode-content">
+          <div class="views" role="tablist" aria-label="Modo de juego y vistas">
+            <button type="button" role="tab" id="tab-practice" aria-selected="true" aria-controls="practice focus-panel">
+              Práctica
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-race"
+              aria-selected="false"
+              aria-controls="race-panel practice"
+            >
+              Carrera
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-suit-positions"
+              aria-selected="false"
+              aria-controls="suit-positions-view"
+            >
+              Valor
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-suit-cards"
+              aria-selected="false"
+              aria-controls="suit-cards-view"
+            >
+              Palo
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tab-focus"
+              aria-selected="false"
+              aria-controls="focus-panel practice"
+            >
+              Repaso
+            </button>
+            <button type="button" role="tab" id="tab-stack" aria-selected="false" aria-controls="stack-view">
+              Mazo
+            </button>
+          </div>
+        </div>
+      </details>
       <section id="focus-panel" role="tabpanel" aria-labelledby="tab-focus" hidden>
         <div id="focus-setup" class="focus-panel">
           <p class="race-title">Repaso</p>
