@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0e2c22" />
     <meta
       name="description"
-      content="Practica la baraja Mnemónica. Di la posición de una carta, identifica cartas por su posición o encuentra las posiciones de un valor en cada palo."
+      content="Practica la baraja Mnemónica. Di la posición de una carta, identifica cartas por su posición, encuentra las posiciones de un valor en cada palo o practica todas las cartas de un palo."
     />
     <title>Mnemónica</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -131,6 +131,15 @@
         <button
           type="button"
           role="tab"
+          id="tab-suit-cards"
+          aria-selected="false"
+          aria-controls="suit-cards-view"
+        >
+          Palo
+        </button>
+        <button
+          type="button"
+          role="tab"
           id="tab-focus"
           aria-selected="false"
           aria-controls="focus-panel practice"
@@ -228,6 +237,17 @@
           <button type="button" id="check-suit-positions" class="check">Comprobar</button>
           <p id="suit-positions-feedback" class="suit-positions-feedback" role="status" hidden></p>
           <button type="button" id="next-suit-positions" class="next" hidden>Siguiente valor</button>
+        </div>
+      </section>
+      <section id="suit-cards-view" role="tabpanel" aria-labelledby="tab-suit-cards" hidden>
+        <div class="suit-positions-panel">
+          <p class="race-title">Palo</p>
+          <p class="hint">Indica la posición de cada carta de este palo, en el orden aleatorio mostrado.</p>
+          <p class="suit-positions-prompt">Palo: <strong id="suit-cards-suit"></strong></p>
+          <div id="suit-card-inputs" class="suit-position-inputs"></div>
+          <button type="button" id="check-suit-cards" class="check">Comprobar</button>
+          <p id="suit-cards-feedback" class="suit-positions-feedback" role="status" hidden></p>
+          <button type="button" id="next-suit-cards" class="next" hidden>Siguiente palo</button>
         </div>
       </section>
     </div>
