@@ -810,11 +810,11 @@ function renderSuitPositions(): void {
       answer.classList.toggle("good", correct);
       answer.classList.toggle("bad", !correct);
       answer.replaceChildren(mark, document.createTextNode(
-        `${cardLabel(card)} · posición ${correctPositions[index].position}`,
+        `${cardLabel(card)} · ${correctPositions[index].position}`,
       ));
       answer.setAttribute(
         "aria-label",
-        `${correct ? "Correcta" : "Incorrecta"}: ${cardSpoken(card)}, posición ${correctPositions[index].position}`,
+        `${correct ? "Correcta" : "Incorrecta"}: ${cardSpoken(card)}, ${correctPositions[index].position}`,
       );
     } else {
       answer?.remove();
