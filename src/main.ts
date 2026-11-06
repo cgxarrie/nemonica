@@ -116,9 +116,13 @@ const feedback = must<HTMLElement>("#feedback");
 const nextButton = must<HTMLButtonElement>("#next");
 const stackGrid = must<HTMLElement>("#stack-grid");
 const stackNote = must<HTMLElement>("#stack-note");
+const stackViewToggle = must<HTMLElement>(".stack-view-toggle");
+const stackValuesWrap = must<HTMLElement>("#stack-values-wrap");
+const stackValuesBody = must<HTMLElement>("#stack-values-body");
 
 type Phase = "answering" | "feedback";
 type View = "practice" | "race" | "stack" | "suit-positions" | "suit-cards" | "focus";
+type StackView = "order" | "values";
 type RaceStatus = "idle" | "active" | "finished";
 
 interface Result {
@@ -144,6 +148,8 @@ let suitCardSuit = pickSuitPositionSuit(null);
 let suitCardQuestions: SuitCardPosition[] = positionsForSuit(suitCardSuit);
 let suitCardAnswers: string[] = Array(suitCardQuestions.length).fill("");
 let suitCardsSubmitted = false;
+let stackDisplayMode: StackView = "order";
+let selectedStackRank: Rank | null = null;
 
 const state: {
   from: number;
@@ -366,9 +372,54 @@ function buildStack(): void {
     item.append(position, name);
     stackGrid.append(item);
   });
+
+  const suits: Suit[] = ["c", "h", "s", "d"];
+  for (const rank of RANKS) {
+    const row = document.createElement("tr");
+    row.dataset.rank = rank;
+
+    const heading = document.createElement("th");
+    heading.scope = "row";
+    const selectRank = document.createElement("button");
+    selectRank.type = "button";
+    selectRank.className = "stack-rank-select";
+    selectRank.textContent = rank;
+    selectRank.setAttribute("aria-label", `Resaltar valor ${rank}`);
+    selectRank.setAttribute("aria-pressed", "false");
+    heading.append(selectRank);
+    row.append(heading);
+
+    for (const suit of suits) {
+      const position = STACK.findIndex((card) => card.rank === rank && card.suit === suit) + 1;
+      if (position === 0) throw new Error(`Missing card ${rank}${suit}`);
+      const cell = document.createElement("td");
+      cell.dataset.position = String(position);
+      cell.setAttribute("aria-label", `${cardSpoken(STACK[position - 1])}, posición ${position}`);
+      cell.textContent = String(position);
+      row.append(cell);
+    }
+
+    stackValuesBody.append(row);
+  }
 }
 
 function bindEvents(): void {
+  stackViewToggle.addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-stack-view]");
+    if (!button) return;
+    const view = button.dataset.stackView;
+    if (view !== "order" && view !== "values") throw new Error(`Unknown stack view: ${view}`);
+    stackDisplayMode = view;
+    renderStackState();
+  });
+  stackValuesBody.addEventListener("click", (event) => {
+    const row = (event.target as HTMLElement).closest<HTMLTableRowElement>("tr[data-rank]");
+    const rank = RANKS.find((candidate) => candidate === row?.dataset.rank);
+    if (!row || !rank) return;
+    selectedStackRank = rank;
+    renderStackState();
+  });
+
   questionModeSelector.addEventListener("click", (event) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-question-mode]");
     if (!button) return;
@@ -1434,6 +1485,13 @@ function cardSpan(card: Card): HTMLElement {
 }
 
 function renderStackState(): void {
+  const orderView = stackDisplayMode === "order";
+  stackGrid.hidden = !orderView;
+  stackValuesWrap.hidden = orderView;
+  for (const button of stackViewToggle.querySelectorAll<HTMLButtonElement>("[data-stack-view]")) {
+    button.setAttribute("aria-pressed", String(button.dataset.stackView === stackDisplayMode));
+  }
+
   const partial = !(state.from === 1 && state.to === 52);
   for (const item of stackGrid.querySelectorAll<HTMLElement>(".stack-card")) {
     const position = Number(item.dataset.position);
@@ -1441,10 +1499,21 @@ function renderStackState(): void {
     item.classList.toggle("in", partial && inside);
     item.classList.toggle("out", !inside);
   }
+  for (const row of stackValuesBody.querySelectorAll<HTMLTableRowElement>("tr[data-rank]")) {
+    const selected = row.dataset.rank === selectedStackRank;
+    row.classList.toggle("selected", selected);
+    row.querySelector<HTMLButtonElement>(".stack-rank-select")?.setAttribute("aria-pressed", String(selected));
+    for (const cell of row.querySelectorAll<HTMLElement>("td[data-position]")) {
+      const position = Number(cell.dataset.position);
+      const inside = position >= state.from && position <= state.to;
+      cell.classList.toggle("in", partial && inside);
+      cell.classList.toggle("out", !inside);
+    }
+  }
   const count = state.to - state.from + 1;
   stackNote.textContent = partial
-    ? `El rango ${state.from}–${state.to} (${count} cartas) está resaltado.`
-    : "Las 52 posiciones están en el rango de práctica.";
+    ? `El rango ${state.from}–${state.to} (${count} cartas) está resaltado. Haz clic en una fila para resaltarla.`
+    : "Las 52 posiciones están en el rango de práctica. Haz clic en una fila para resaltarla.";
 }
 
 function onKeyDown(event: KeyboardEvent): void {

@@ -232,8 +232,26 @@
       </section>
 
       <section id="stack-view" role="tabpanel" aria-labelledby="tab-stack" hidden>
+        <div class="stack-view-toggle" role="group" aria-label="Vista del mazo">
+          <button type="button" data-stack-view="order" aria-pressed="true">Orden</button>
+          <button type="button" data-stack-view="values" aria-pressed="false">Valores</button>
+        </div>
         <p class="hint" id="stack-note"></p>
         <ol class="stack-grid" id="stack-grid"></ol>
+        <div class="stack-values-wrap" id="stack-values-wrap" hidden>
+          <table class="stack-values" id="stack-values">
+            <thead>
+              <tr>
+                <th scope="col">Valor</th>
+                <th scope="col" aria-label="Clubs">♣</th>
+                <th scope="col" aria-label="Hearts">♥</th>
+                <th scope="col" aria-label="Spades">♠</th>
+                <th scope="col" aria-label="Diamonds">♦</th>
+              </tr>
+            </thead>
+            <tbody id="stack-values-body"></tbody>
+          </table>
+        </div>
       </section>
 
       <section id="suit-positions-view" role="tabpanel" aria-labelledby="tab-suit-positions" hidden>
