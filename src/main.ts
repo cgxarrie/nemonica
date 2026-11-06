@@ -118,6 +118,7 @@ const stackGrid = must<HTMLElement>("#stack-grid");
 const stackNote = must<HTMLElement>("#stack-note");
 const stackViewToggle = must<HTMLElement>(".stack-view-toggle");
 const stackValuesWrap = must<HTMLElement>("#stack-values-wrap");
+const stackValuesHeader = must<HTMLElement>("#stack-values-header");
 const stackValuesBody = must<HTMLElement>("#stack-values-body");
 
 type Phase = "answering" | "feedback";
@@ -373,7 +374,24 @@ function buildStack(): void {
     stackGrid.append(item);
   });
 
-  const suits: Suit[] = ["c", "h", "s", "d"];
+  renderStackValues(randomizedSuits());
+}
+
+function renderStackValues(suits: Suit[]): void {
+  const rankHeading = stackValuesHeader.querySelector("th");
+  if (!rankHeading) throw new Error("Missing stack rank column header");
+  stackValuesHeader.replaceChildren(rankHeading);
+  stackValuesBody.replaceChildren();
+
+  for (const suit of suits) {
+    const heading = document.createElement("th");
+    heading.scope = "col";
+    heading.setAttribute("aria-label", SUIT_NAME[suit]);
+    heading.textContent = SUIT_SYMBOL[suit];
+    if (isRed(suit)) heading.className = "red";
+    stackValuesHeader.append(heading);
+  }
+
   for (const rank of RANKS) {
     const row = document.createElement("tr");
     row.dataset.rank = rank;
@@ -403,12 +421,24 @@ function buildStack(): void {
   }
 }
 
+function randomizedSuits(): Suit[] {
+  const suits: Suit[] = ["c", "h", "s", "d"];
+  for (let index = suits.length - 1; index > 0; index -= 1) {
+    const otherIndex = Math.floor(Math.random() * (index + 1));
+    [suits[index], suits[otherIndex]] = [suits[otherIndex], suits[index]];
+  }
+  return suits;
+}
+
 function bindEvents(): void {
   stackViewToggle.addEventListener("click", (event) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-stack-view]");
     if (!button) return;
     const view = button.dataset.stackView;
     if (view !== "order" && view !== "values") throw new Error(`Unknown stack view: ${view}`);
+    if (view === "values" && stackDisplayMode !== "values") {
+      renderStackValues(randomizedSuits());
+    }
     stackDisplayMode = view;
     renderStackState();
   });
