@@ -1055,6 +1055,100 @@ h1 {
   padding: 0 0 12px;
 }
 
+.stack-view-toggle {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.stack-view-toggle button {
+  min-height: 40px;
+  flex: 1;
+  border: 1px solid rgba(240, 226, 200, 0.28);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+}
+
+.stack-view-toggle button[aria-pressed="true"] {
+  border-color: var(--brass);
+  background: rgba(240, 226, 200, 0.18);
+  color: var(--brass);
+}
+
+.stack-values-wrap {
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+.stack-values {
+  width: 100%;
+  margin-top: 12px;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.stack-values th,
+.stack-values td {
+  padding: 7px 4px;
+}
+
+.stack-values thead th {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 560;
+}
+
+.stack-values thead th.red {
+  color: var(--red);
+}
+
+.stack-values thead th:not(:first-child) {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.stack-values tbody tr {
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.stack-values tbody tr.selected {
+  background: rgba(240, 226, 200, 0.2);
+  box-shadow: inset 0 1px 0 rgba(240, 226, 200, 0.42), inset 0 -1px 0 rgba(240, 226, 200, 0.42);
+}
+
+.stack-values tbody th {
+  width: 42px;
+  border-radius: 8px 0 0 8px;
+  font-weight: 650;
+}
+
+.stack-rank-select {
+  min-width: 36px;
+  min-height: 36px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 650;
+}
+
+.stack-values tbody td:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.stack-values td.out {
+  opacity: 0.38;
+}
+
+.stack-values tbody tr.selected .stack-rank-select {
+  color: var(--brass);
+}
+
 .stack-card {
   padding: 8px 4px 10px;
   border-radius: 12px;
