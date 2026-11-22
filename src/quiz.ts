@@ -180,6 +180,49 @@ export function positionsForSuit(
   }));
 }
 
+export function shuffledSuitPositionOrder(
+  random: () => number = Math.random,
+): Suit[] {
+  const suits = [...SUIT_POSITION_ORDER];
+  for (let index = suits.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [suits[index], suits[swapIndex]] = [suits[swapIndex], suits[index]];
+  }
+  return suits;
+}
+
+export function positionsForRankInSuitOrder(
+  rank: Rank,
+  suitOrder: readonly Suit[],
+): SuitPosition[] {
+  return suitOrder.map((suit) => ({
+    suit,
+    position: STACK.findIndex((card) => card.rank === rank && card.suit === suit) + 1,
+  }));
+}
+
+export function buildSuitPositionRace(
+  random: () => number = Math.random,
+): Rank[] {
+  const ranks = [...RANKS];
+  for (let index = ranks.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [ranks[index], ranks[swapIndex]] = [ranks[swapIndex], ranks[index]];
+  }
+  return ranks;
+}
+
+export function buildSuitCardRace(
+  random: () => number = Math.random,
+): Suit[] {
+  const suits = [...SUITS];
+  for (let index = suits.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [suits[index], suits[swapIndex]] = [suits[swapIndex], suits[index]];
+  }
+  return suits;
+}
+
 export function clampPosition(n: number): number {
   if (!Number.isFinite(n)) return 1;
   return Math.min(52, Math.max(1, Math.round(n)));

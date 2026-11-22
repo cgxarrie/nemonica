@@ -22,6 +22,10 @@ import {
   pickSuitPositionSuit,
   positionsForSuit,
   positionsForRank,
+  positionsForRankInSuitOrder,
+  shuffledSuitPositionOrder,
+  buildSuitPositionRace,
+  buildSuitCardRace,
   normalizeCardPerformanceRecord,
   priorityPositions,
   recordCardAnswer,
@@ -99,6 +103,8 @@ const suitCardInputs = must<HTMLElement>("#suit-card-inputs");
 const checkSuitCards = must<HTMLButtonElement>("#check-suit-cards");
 const nextSuitCards = must<HTMLButtonElement>("#next-suit-cards");
 const suitCardsFeedback = must<HTMLElement>("#suit-cards-feedback");
+const startSuitPositionsRace = must<HTMLButtonElement>("#start-suit-positions-race");
+const startSuitCardsRace = must<HTMLButtonElement>("#start-suit-cards-race");
 const prompt = must<HTMLElement>("#prompt");
 const ask = must<HTMLElement>("#ask");
 const positionEntry = must<HTMLElement>("#position-entry");
@@ -149,6 +155,15 @@ let suitCardSuit = pickSuitPositionSuit(null);
 let suitCardQuestions: SuitCardPosition[] = positionsForSuit(suitCardSuit);
 let suitCardAnswers: string[] = Array(suitCardQuestions.length).fill("");
 let suitCardsSubmitted = false;
+let suitPositionRaceActive = false;
+let suitPositionRaceRanks: Rank[] = [];
+let suitPositionRaceIndex = 0;
+let suitPositionRaceCorrect = 0;
+let suitPositionRaceSuitOrder: Suit[] = shuffledSuitPositionOrder();
+let suitCardRaceActive = false;
+let suitCardRaceSuits: Suit[] = [];
+let suitCardRaceIndex = 0;
+let suitCardRaceCorrect = 0;
 let stackDisplayMode: StackView = "order";
 let selectedStackRank: Rank | null = null;
 
@@ -322,6 +337,7 @@ function buildSuitPositionInputs(): void {
   }
   checkSuitPositions.addEventListener("click", submitSuitPositions);
   nextSuitPositions.addEventListener("click", nextSuitPositionRound);
+  startSuitPositionsRace.addEventListener("click", startSuitPositionRace);
 }
 
 function buildSuitCardInputs(): void {
@@ -353,6 +369,7 @@ function buildSuitCardInputs(): void {
   }
   checkSuitCards.addEventListener("click", submitSuitCards);
   nextSuitCards.addEventListener("click", nextSuitCardRound);
+  startSuitCardsRace.addEventListener("click", startSuitCardRace);
 }
 
 function buildStack(): void {
@@ -891,6 +908,21 @@ function resetSession(): void {
   renderScore();
 }
 
+function startSuitPositionRace(): void {
+  suitPositionRaceRanks = buildSuitPositionRace();
+  suitPositionRaceIndex = 0;
+  suitPositionRaceCorrect = 0;
+  suitPositionRaceActive = true;
+  suitPositionRank = suitPositionRaceRanks[0];
+  suitPositionRaceSuitOrder = shuffledSuitPositionOrder();
+  suitPositionAnswers = Array(SUIT_POSITION_ORDER.length).fill("");
+  suitPositionsSubmitted = false;
+  suitPositionsFeedback.hidden = true;
+  suitPositionsFeedback.classList.remove("good", "bad");
+  renderSuitPositions();
+  suitPositionInputs.querySelector<HTMLInputElement>("input")?.focus();
+}
+
 function submitSuitPositions(): void {
   if (suitPositionsSubmitted) return;
   const answers = suitPositionAnswers.map((answer) => {
@@ -899,8 +931,34 @@ function submitSuitPositions(): void {
     return position >= 1 && position <= 52 ? position : null;
   });
 
-  const correctPositions = positionsForRank(suitPositionRank);
+  const correctPositions = suitPositionRaceActive
+    ? positionsForRankInSuitOrder(suitPositionRank, suitPositionRaceSuitOrder)
+    : positionsForRank(suitPositionRank);
   const right = correctPositions.every(({ position }, index) => answers[index] === position);
+  if (suitPositionRaceActive) {
+    if (right) suitPositionRaceCorrect += 1;
+    suitPositionRaceIndex += 1;
+    suitPositionAnswers = Array(SUIT_POSITION_ORDER.length).fill("");
+    if (suitPositionRaceIndex >= suitPositionRaceRanks.length) {
+      suitPositionRaceActive = false;
+      suitPositionsSubmitted = false;
+      suitPositionsFeedback.textContent =
+        `Carrera terminada: ${suitPositionRaceCorrect}/13 valores correctos.`;
+      suitPositionsFeedback.classList.toggle("good", suitPositionRaceCorrect === 13);
+      suitPositionsFeedback.classList.toggle("bad", suitPositionRaceCorrect !== 13);
+      suitPositionsFeedback.hidden = false;
+      checkSuitPositions.hidden = false;
+      checkSuitPositions.disabled = false;
+      startSuitPositionsRace.hidden = false;
+      startSuitPositionsRace.focus();
+      return;
+    }
+    suitPositionRank = suitPositionRaceRanks[suitPositionRaceIndex];
+    suitPositionRaceSuitOrder = shuffledSuitPositionOrder();
+    renderSuitPositions();
+    suitPositionInputs.querySelector<HTMLInputElement>("input")?.focus();
+    return;
+  }
   state.attempts += 1;
   if (right) {
     state.correct += 1;
@@ -925,11 +983,30 @@ function nextSuitPositionRound(): void {
 
 function renderSuitPositions(): void {
   suitPositionsRank.textContent = suitPositionRank;
-  const correctPositions = positionsForRank(suitPositionRank);
+  const suitOrder = suitPositionRaceActive
+    ? suitPositionRaceSuitOrder
+    : SUIT_POSITION_ORDER;
+  const correctPositions = suitPositionRaceActive
+    ? positionsForRankInSuitOrder(suitPositionRank, suitOrder)
+    : positionsForRank(suitPositionRank);
   const inputs = suitPositionInputs.querySelectorAll<HTMLInputElement>("input");
   inputs.forEach((input, index) => {
     const row = input.closest<HTMLElement>(".suit-position-row");
     if (!row) throw new Error("Missing suit-position row");
+    const suitName = row.querySelector<HTMLElement>(".suit-position-name");
+    if (suitName) {
+      const suit = suitOrder[index];
+      const names: Record<Suit, string> = {
+        c: "Tréboles",
+        h: "Corazones",
+        s: "Picas",
+        d: "Diamantes",
+      };
+      suitName.textContent = `${names[suit]} ${SUIT_SYMBOL[suit]}`;
+      suitName.classList.toggle("red", isRed(suit));
+      suitName.classList.toggle("black", !isRed(suit));
+      input.setAttribute("aria-label", `Posición de ${names[suit].toLowerCase()}`);
+    }
     row.classList.toggle("revealed", suitPositionsSubmitted);
     row.classList.toggle(
       "correct",
@@ -975,15 +1052,10 @@ function renderSuitPositions(): void {
     }
   });
 
-  const ready = suitPositionAnswers.every((answer) => {
-    if (answer === "") return true;
-    if (!/^\d{1,2}$/.test(answer)) return false;
-    const position = Number(answer);
-    return position >= 1 && position <= 52;
-  });
-  checkSuitPositions.disabled = !ready || suitPositionsSubmitted;
+  checkSuitPositions.disabled = suitPositionsSubmitted;
   checkSuitPositions.hidden = suitPositionsSubmitted;
-  nextSuitPositions.hidden = !suitPositionsSubmitted;
+  nextSuitPositions.hidden = !suitPositionsSubmitted || suitPositionRaceActive;
+  startSuitPositionsRace.hidden = suitPositionRaceActive;
   suitPositionsFeedback.hidden = !suitPositionsSubmitted;
   if (suitPositionsSubmitted) {
     const allCorrect = correctPositions.every(
@@ -997,6 +1069,21 @@ function renderSuitPositions(): void {
   }
 }
 
+function startSuitCardRace(): void {
+  suitCardRaceSuits = buildSuitCardRace();
+  suitCardRaceIndex = 0;
+  suitCardRaceCorrect = 0;
+  suitCardRaceActive = true;
+  suitCardSuit = suitCardRaceSuits[0];
+  suitCardQuestions = positionsForSuit(suitCardSuit);
+  suitCardAnswers = Array(suitCardQuestions.length).fill("");
+  suitCardsSubmitted = false;
+  suitCardsFeedback.hidden = true;
+  suitCardsFeedback.classList.remove("good", "bad");
+  renderSuitCards();
+  suitCardInputs.querySelector<HTMLInputElement>("input")?.focus();
+}
+
 function submitSuitCards(): void {
   if (suitCardsSubmitted) return;
   const answers = suitCardAnswers.map((answer) => {
@@ -1006,6 +1093,31 @@ function submitSuitCards(): void {
   });
 
   const right = suitCardQuestions.every(({ position }, index) => answers[index] === position);
+  if (suitCardRaceActive) {
+    if (right) suitCardRaceCorrect += 1;
+    suitCardRaceIndex += 1;
+    suitCardAnswers = Array(suitCardQuestions.length).fill("");
+    if (suitCardRaceIndex >= suitCardRaceSuits.length) {
+      suitCardRaceActive = false;
+      suitCardsSubmitted = false;
+      suitCardsFeedback.textContent =
+        `Carrera terminada: ${suitCardRaceCorrect}/4 palos correctos.`;
+      suitCardsFeedback.classList.toggle("good", suitCardRaceCorrect === 4);
+      suitCardsFeedback.classList.toggle("bad", suitCardRaceCorrect !== 4);
+      suitCardsFeedback.hidden = false;
+      checkSuitCards.hidden = false;
+      checkSuitCards.disabled = false;
+      startSuitCardsRace.hidden = false;
+      startSuitCardsRace.focus();
+      return;
+    }
+    suitCardSuit = suitCardRaceSuits[suitCardRaceIndex];
+    suitCardQuestions = positionsForSuit(suitCardSuit);
+    suitCardAnswers = Array(suitCardQuestions.length).fill("");
+    renderSuitCards();
+    suitCardInputs.querySelector<HTMLInputElement>("input")?.focus();
+    return;
+  }
   state.attempts += 1;
   if (right) {
     state.correct += 1;
@@ -1086,15 +1198,10 @@ function renderSuitCards(): void {
     );
   });
 
-  const ready = suitCardAnswers.every((answer) => {
-    if (answer === "") return true;
-    if (!/^\d{1,2}$/.test(answer)) return false;
-    const position = Number(answer);
-    return position >= 1 && position <= 52;
-  });
-  checkSuitCards.disabled = !ready || suitCardsSubmitted;
+  checkSuitCards.disabled = suitCardsSubmitted;
   checkSuitCards.hidden = suitCardsSubmitted;
-  nextSuitCards.hidden = !suitCardsSubmitted;
+  nextSuitCards.hidden = !suitCardsSubmitted || suitCardRaceActive;
+  startSuitCardsRace.hidden = suitCardRaceActive;
   suitCardsFeedback.hidden = !suitCardsSubmitted;
   if (suitCardsSubmitted) {
     const allCorrect = suitCardQuestions.every(
