@@ -14,6 +14,10 @@ import {
   pickSuitPositionSuit,
   positionsForSuit,
   positionsForRank,
+  positionsForRankInSuitOrder,
+  shuffledSuitPositionOrder,
+  buildSuitPositionRace,
+  buildSuitCardRace,
   priorityPositions,
   recordCardAnswer,
   toggleQuestionMode,
@@ -251,4 +255,33 @@ test("suit positions include each card in the chosen suit in shuffled rank order
     assert.equal(STACK[position - 1].rank, rank);
     assert.equal(STACK[position - 1].suit, suit);
   }
+});
+
+test("suit-position race has all 13 values once in shuffled rank order", () => {
+  const ranks = buildSuitPositionRace(() => 0);
+  assert.equal(ranks.length, 13);
+  assert.equal(new Set(ranks).size, 13);
+  assert.notDeepEqual(ranks, [
+    "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K",
+  ]);
+});
+
+test("suit-position race can shuffle the four suit positions", () => {
+  const suits = shuffledSuitPositionOrder(() => 0);
+  assert.equal(suits.length, 4);
+  assert.equal(new Set(suits).size, 4);
+  assert.notDeepEqual(suits, ["c", "h", "s", "d"]);
+  const positions = positionsForRankInSuitOrder("A", suits);
+  assert.deepEqual(positions.map(({ suit }) => suit), suits);
+  for (const { suit, position } of positions) {
+    assert.equal(STACK[position - 1].rank, "A");
+    assert.equal(STACK[position - 1].suit, suit);
+  }
+});
+
+test("suit-card race has all four suits once in shuffled order", () => {
+  const suits = buildSuitCardRace(() => 0);
+  assert.equal(suits.length, 4);
+  assert.equal(new Set(suits).size, 4);
+  assert.notDeepEqual(suits, ["c", "h", "s", "d"]);
 });

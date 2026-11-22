@@ -12,6 +12,8 @@ Set **Desde** and **Hasta**, or pick a shortcut such as `1–13` or **Todas**. Q
 
 Card statistics are saved in this browser. Practice and race answers contribute to each card’s miss count and average correct-answer time; the separate **Valor** and **Palo** exercises do not.
 
+**Valor** also offers a race with the 13 values in random order, without repeats. Each value asks for the positions of the four suits in a random suit order. **Palo** offers a race with the four suits in random order, without repeats, and each suit asks for all 13 values in a shuffled order. In either race, **Comprobar** remains available with empty answers; every missing answer counts as a mistake.
+
 ## Run locally
 
 Requires Node.js 22 or newer.
